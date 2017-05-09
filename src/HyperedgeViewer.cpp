@@ -31,36 +31,32 @@ HyperedgeViewer::HyperedgeViewer(QWidget *parent)
 
 void HyperedgeScene::visualize(Hyperedge *root)
 {
-    if (!root)
+    // Handle pointers
+    if (!root && !lastRoot)
         return;
 
-    // First clear the old scene
-    clear();
-    
+    if (!root)
+        root = lastRoot;
+    else
+        lastRoot = root;
+
     // Then make a traversal through the graph, creating the corresponding items while checking a possible previous layout
+    QMap<unsigned int,HyperedgeItem*> validItems;
     Hyperedge *traversal = root->traversal<Hyperedge>
               (
                [&](Hyperedge *x){
-                    // Create a hyperedge item
+                    // Create or get item
                     HyperedgeItem *item;
-                    if (currentItems.contains(x))
+                    if (!currentItems.contains(x->id()))
                     {
-                        item = currentItems[x];
-                    } else {
                         item = new HyperedgeItem(x);
-                    }
-
-                    // Set cached position or assign a new one!
-                    if (currentLayout.contains(x)) {
-                        item->setPos(currentLayout[x]);
-                    } else {
                         item->setPos(qrand() % 2000 - 1000, qrand() % 2000 - 1000);
+                        addItem(item);
+                        currentItems[x->id()] = item;
+                    } else {
+                        item = currentItems[x->id()];
                     }
-
-                    // Update current layout
-                    currentLayout[x] = item->pos();
-                    currentItems[x] = item;
-                    addItem(item);
+                    validItems[x->id()] = item; 
                     return false;
                 },
                [](Hyperedge *x, Hyperedge *y){
@@ -70,24 +66,57 @@ void HyperedgeScene::visualize(Hyperedge *root)
                "visualizeFrom",
                Hyperedge::TraversalDirection::BOTH
               );
-
-    // Now we have to go through all HyperedgeItems and create a EdgeItem for all things they point to
-    QMap<Hyperedge*,HyperedgeItem*>::const_iterator it = currentItems.begin();
-    while (it != currentItems.end())
+    delete traversal;
+    
+    // Everything which is in validItem should be wired
+    QMap<unsigned int,HyperedgeItem*>::const_iterator it;
+    for (it = validItems.begin(); it != validItems.end(); ++it)
     {
-        auto edge = it.key();
+        auto edgeId = it.key();
         auto srcItem = it.value();
+        auto edge = Hyperedge::find(edgeId);
         for (auto otherId : edge->pointingTo())
         {
-            auto other = Hyperedge::find(otherId);
-            auto destItem = currentItems[other];
-            // Create line
-            auto line = new EdgeItem(srcItem, destItem);
-            addItem(line);
+            if (!validItems.contains(otherId))
+                continue;
+            // Create line if needed
+            auto destItem = validItems[otherId];
+            if (!srcItem->getEdgeItems().contains(otherId))
+            {
+                auto line = new EdgeItem(srcItem, destItem);
+                addItem(line);
+            }
         }
-        ++it;
     }
-    delete traversal;
+
+    // Everything which is in currentItems but not in validItems has to be removed
+    // First: remove edges
+    QMap<unsigned int,HyperedgeItem*> toBeChecked(currentItems);
+    for (it = toBeChecked.begin(); it != toBeChecked.end(); ++it)
+    {
+        auto id = it.key();
+        if (validItems.contains(id))
+            continue;
+        auto item = it.value();
+        auto edgeMap = item->getEdgeItems();
+        for (auto edge : edgeMap)
+        {
+            edge->deregister();
+            delete edge;
+        }
+    }
+
+    // Everything which is in currentItems but not in validItems has to be removed
+    // Second: remove items
+    for (it = toBeChecked.begin(); it != toBeChecked.end(); ++it)
+    {
+        auto id = it.key();
+        if (validItems.contains(id))
+            continue;
+        auto item = it.value();
+        currentItems.remove(id);
+        delete item;
+    }
 }
 
 HyperedgeViewer::~HyperedgeViewer()
@@ -144,8 +173,12 @@ void HyperedgeView::keyPressEvent(QKeyEvent * event)
         if (selectedItem)
         {
             // Delete edge from graph
-            // TODO: This is really tricky ... Should halt the ForceBasedLayouter!!!
-            // Furthermore, this operation could make a forest out of a single connected graph
+            // FIXME: Furthermore, this operation could make a forest out of a single connected graph
+            // FIXME: Prevent the root from being deleted!
+            auto edge = selectedItem->getHyperEdge();
+            if (edge)
+                delete edge;
+            selectedItem = NULL;
         }
     }
     QGraphicsView::keyPressEvent(event);
@@ -225,12 +258,8 @@ void HyperedgeView::mouseReleaseEvent(QMouseEvent* event)
         if (edge)
         {
             // Add model edge
-            if (sourceItem->getHyperEdge()->pointTo(edge->getHyperEdge()->id()))
-            {
-                // Add visual edge as well
-                auto line = new EdgeItem(sourceItem, edge);
-                scene()->addItem(line);
-            }
+            // TODO: This should be a method of HyperedgeScene?
+            sourceItem->getHyperEdge()->pointTo(edge->getHyperEdge()->id());
         }
         if (lineItem)
         {
@@ -248,7 +277,7 @@ ForceBasedScene::ForceBasedScene(QObject * parent)
 : HyperedgeScene(parent)
 {
     mpTimer = new QTimer(this);
-    connect(mpTimer, SIGNAL(timeout()), this, SLOT(updateLayout()));
+    connect(mpTimer, SIGNAL(timeout()), this, SLOT(visualize()));
     mpTimer->start(1000/25);
 
     mEquilibriumDistance = 100;
@@ -260,7 +289,9 @@ ForceBasedScene::~ForceBasedScene()
 }
 
 HyperedgeScene::HyperedgeScene(QObject * parent)
+: QGraphicsScene(parent)
 {
+    lastRoot = NULL;
 }
 
 HyperedgeScene::~HyperedgeScene()
@@ -268,8 +299,11 @@ HyperedgeScene::~HyperedgeScene()
 }
 
 
-void ForceBasedScene::updateLayout()
+void ForceBasedScene::visualize(Hyperedge *root)
 {
+    // First reconstruct the scene
+    HyperedgeScene::visualize(root);
+
     // This is similar to Graph Drawing by Force-directed  Placement THOMAS M. J. FRUCHTERMAN* AND EDWARD M. REINGOLD 
     qreal k = mEquilibriumDistance;
     qreal k_sqr = k * k;

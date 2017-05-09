@@ -11,6 +11,7 @@ class HyperedgeItem : public QGraphicsItem
 {
     public:
         HyperedgeItem(Hyperedge* edge);
+        HyperedgeItem(unsigned int id);
         virtual ~HyperedgeItem();
 
         QRectF boundingRect() const;
@@ -18,14 +19,15 @@ class HyperedgeItem : public QGraphicsItem
         void paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
                    QWidget *widget);
 
-        Hyperedge* getHyperEdge()
+        Hyperedge* getHyperEdge();
+        unsigned int getHyperEdgeId()
         {
-            return mpEdge;
+            return edgeId;
         }
 
         // Method to register edge items at the hyperedge item
-        void registerEdgeItem(EdgeItem *line);
-        void deregisterEdgeItem(EdgeItem *line);
+        void registerEdgeItem(unsigned int otherId, EdgeItem *line);
+        void deregisterEdgeItem(unsigned int otherId);
 
         // Tell all registered edge items to update themselves!!!
         void updateEdgeItems();
@@ -34,9 +36,9 @@ class HyperedgeItem : public QGraphicsItem
         void setHighlight(bool choice);
         bool isHighlighted();
 
-        QVector<EdgeItem*> getEdgeItems()
+        QMap<unsigned int, EdgeItem*> getEdgeItems()
         {
-            return mEdgeVec;
+            return mEdgeMap;
         }
 
     protected:
@@ -44,12 +46,12 @@ class HyperedgeItem : public QGraphicsItem
         virtual QVariant itemChange(GraphicsItemChange change, const QVariant& value);
 
     private:
+        unsigned int edgeId;
         bool highlighted;
-        Hyperedge* mpEdge;
 
         int mLabelWidth;
         int mLabelHeight;
-        QVector<EdgeItem*> mEdgeVec;
+        QMap<unsigned int, EdgeItem*> mEdgeMap;
 };
 
 class EdgeItem : public QGraphicsItem
@@ -65,6 +67,9 @@ class EdgeItem : public QGraphicsItem
 
         // This is called whenever this item has to change
         void adjust();
+
+        // Deregisters from HyperedgeItems
+        void deregister();
 
         HyperedgeItem* getSourceItem()
         {

@@ -26,11 +26,14 @@ class HyperedgeScene : public QGraphicsScene
         HyperedgeScene(QObject * parent = 0);
         ~HyperedgeScene();
 
+    public slots:
+        // This is the constructing function of the hyperedge scene
+        // If no pointer is given it will reconstruct from lastRoot
         void visualize(Hyperedge *root = NULL);
 
     private:
-        QMap<Hyperedge*, QPointF> currentLayout;
-        QMap<Hyperedge*, HyperedgeItem*> currentItems;
+        Hyperedge *lastRoot;
+        QMap<unsigned int, HyperedgeItem*> currentItems;
 };
 
 class ForceBasedScene : public HyperedgeScene
@@ -45,9 +48,10 @@ class ForceBasedScene : public HyperedgeScene
         //void setEnabled(bool enable);
         //void setEquilibriumDistance(qreal k);
 
-    private slots:
+    public slots:
         // Cycles through all items of a scene and updates the positions of hyperedgeitems according to their neighbours
-        void updateLayout();
+        // Calls the base class visualizer as well
+        void visualize(Hyperedge *root = NULL);
 
     private:
         QTimer *mpTimer;
@@ -79,6 +83,7 @@ class HyperedgeView : public QGraphicsView
 
         // Keyboard event to
         // a) delete edges (Del)
+        // TODO b) insert edges (Ins)
         void keyPressEvent(QKeyEvent * event);
 
     private:

@@ -5,9 +5,23 @@
 #include "Hyperedge.hpp"
 #include <iostream>
 
-HyperedgeItem::HyperedgeItem(Hyperedge *edge)
-: mpEdge(edge)
+HyperedgeItem::HyperedgeItem(unsigned int id)
+: edgeId(id)
 {
+    mLabelHeight = 10;
+    mLabelWidth = 20;
+    highlighted = false;
+    setFlag(ItemIsMovable);
+    setFlag(ItemSendsScenePositionChanges);
+    setVisible(true);
+    setZValue(1);
+}
+
+HyperedgeItem::HyperedgeItem(Hyperedge *edge)
+: edgeId(edge->id())
+{
+    mLabelHeight = 10;
+    mLabelWidth = 20;
     highlighted = false;
     setFlag(ItemIsMovable);
     setFlag(ItemSendsScenePositionChanges);
@@ -17,6 +31,11 @@ HyperedgeItem::HyperedgeItem(Hyperedge *edge)
 
 HyperedgeItem::~HyperedgeItem()
 {
+}
+
+Hyperedge* HyperedgeItem::getHyperEdge()
+{
+    return Hyperedge::find(edgeId);
 }
 
 void HyperedgeItem::setHighlight(bool choice)
@@ -32,22 +51,24 @@ bool HyperedgeItem::isHighlighted()
 
 void HyperedgeItem::updateEdgeItems()
 {
-    for (auto edge : mEdgeVec)
+    prepareGeometryChange();
+    for (auto edge : mEdgeMap)
     {
         edge->adjust();
     }
 }
 
-void HyperedgeItem::registerEdgeItem(EdgeItem *line)
+void HyperedgeItem::registerEdgeItem(unsigned int otherId, EdgeItem *line)
 {
-    mEdgeVec.push_back(line);
+    if (!mEdgeMap.contains(otherId))
+    {
+        mEdgeMap[otherId] = line;
+    }
 }
 
-void HyperedgeItem::deregisterEdgeItem(EdgeItem *line)
+void HyperedgeItem::deregisterEdgeItem(unsigned int otherId)
 {
-    int index = mEdgeVec.indexOf(line);
-    if (index >= 0)
-        mEdgeVec.remove(index);
+    mEdgeMap.remove(otherId);
 }
 
 QVariant HyperedgeItem::itemChange(GraphicsItemChange change,
@@ -79,7 +100,10 @@ void HyperedgeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
            QWidget *widget)
 {
     QFontMetrics fm(widget->fontMetrics());
-    mLabelWidth = qMax(fm.width(mpEdge->label().c_str()), 10);
+    Hyperedge* mpEdge = getHyperEdge();
+    if (!mpEdge)
+        return;
+    mLabelWidth = qMax(fm.width(mpEdge->label().c_str()), 20);
     mLabelHeight = qMax(fm.height(), 10);
 
     if (highlighted)
@@ -94,15 +118,19 @@ EdgeItem::EdgeItem(HyperedgeItem *from, HyperedgeItem *to)
 : mpSourceEdge(from),
   mpTargetEdge(to)
 {
-    from->registerEdgeItem(this);
-    to->registerEdgeItem(this);
+    from->registerEdgeItem(to->getHyperEdgeId(), this);
+    to->registerEdgeItem(from->getHyperEdgeId(), this);
     setVisible(true);
 }
 
 EdgeItem::~EdgeItem()
 {
-    mpSourceEdge->deregisterEdgeItem(this);
-    mpTargetEdge->deregisterEdgeItem(this);
+}
+
+void EdgeItem::deregister()
+{
+    mpSourceEdge->deregisterEdgeItem(mpTargetEdge->getHyperEdgeId());
+    mpTargetEdge->deregisterEdgeItem(mpSourceEdge->getHyperEdgeId());
 }
 
 void EdgeItem::adjust()
