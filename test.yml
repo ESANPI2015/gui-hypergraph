@@ -1,86 +1,203 @@
+- id: 1
+  label: Computational Hardware
 - id: 3
-  label: Things
+  label: memberOf
+  pointingTo:
+    - 1
+    - 38
+- id: 5
+  label: memberOf
+  pointingTo:
+    - 1
+- id: 7
+  label: memberOf
+  pointingTo:
+    - 1
+- id: 2
+  label: Device
+  pointingTo:
+    - 3
+- id: 38
+  label: superclasses
+- id: 4
+  label: Interface
+  pointingTo:
+    - 5
+- id: 6
+  label: Bus
+  pointingTo:
+    - 7
 - id: 9
   label: isA
   pointingTo:
-    - 3
-- id: 12
+    - 2
+- id: 31
   label: isA
   pointingTo:
-    - 3
-- id: 20
-  label: cardinalityLessThanOrEqual(0)
-  pointingTo:
-    - 3
-- id: 5
-  label: Components
-  pointingTo:
-    - 9
-    - 19
-- id: 21
-  label: cardinalityGreaterThan(0)
-  pointingTo:
-    - 5
-    - 6
-    - 7
-    - 8
-    - 9
-    - 10
-    - 11
-    - 12
-    - 13
-    - 14
-    - 15
-    - 16
-    - 17
-    - 18
-    - 19
-    - 20
-- id: 6
-  label: Ports
-  pointingTo:
-    - 12
-- id: 18
+    - 2
+- id: 34
   label: isA
   pointingTo:
-    - 5
-- id: 19
-  label: have
-  pointingTo:
-    - 6
-- id: 7
-  label: Inputs
-  pointingTo:
-    - 10
-- id: 8
-  label: Outputs
-  pointingTo:
-    - 11
-- id: 10
+    - 2
+- id: 36
   label: isA
   pointingTo:
-    - 6
+    - 2
+    - 33
+- id: 37
+  label: isA
+  pointingTo:
+    - 2
+    - 33
+- id: 44
+  label: isA
+  pointingTo:
+    - 2
+- id: 39
+  label: memberOf
+  pointingTo:
+    - 38
 - id: 11
   label: isA
   pointingTo:
-    - 6
+    - 4
+- id: 22
+  label: isA
+  pointingTo:
+    - 4
+- id: 47
+  label: isA
+  pointingTo:
+    - 4
+- id: 49
+  label: isA
+  pointingTo:
+    - 4
+    - 46
+- id: 51
+  label: isA
+  pointingTo:
+    - 4
+    - 46
 - id: 13
-  label: ComponentX
+  label: isA
   pointingTo:
-    - 18
-- id: 14
-  label: Component1
+    - 6
+- id: 55
+  label: isA
   pointingTo:
-    - 15
-- id: 15
-  label: partOf
+    - 6
+- id: 8
+  label: Device
+  pointingTo:
+    - 9
+    - 16
+    - 20
+- id: 30
+  label: oO
+  pointingTo:
+    - 31
+    - 32
+- id: 33
+  label: Processor
+  pointingTo:
+    - 34
+    - 39
+- id: 35
+  label: x86
+  pointingTo:
+    - 36
+    - 37
+    - 40
+    - 45
+    - 53
+- id: 43
+  label: PCB
+  pointingTo:
+    - 44
+    - 52
+- id: 10
+  label: Interface
+  pointingTo:
+    - 11
+    - 19
+- id: 21
+  label: Interface
+  pointingTo:
+    - 22
+    - 28
+- id: 46
+  label: USB
+  pointingTo:
+    - 47
+- id: 48
+  label: USB
+  pointingTo:
+    - 49
+- id: 50
+  label: USB
+  pointingTo:
+    - 51
+- id: 12
+  label: Bus
   pointingTo:
     - 13
+    - 25
+    - 29
+- id: 54
+  label: USB
+  pointingTo:
+    - 55
+    - 56
 - id: 16
-  label: Component2
+  label: memberOf
+- id: 20
+  label: has
   pointingTo:
-    - 17
-- id: 17
+    - 10
+    - 21
+- id: 32
+  label: has
+  pointingTo:
+    - 10
+    - 21
+- id: 40
+  label: superclassOf
+- id: 45
   label: partOf
   pointingTo:
-    - 13
+    - 43
+- id: 53
+  label: has
+  pointingTo:
+    - 50
+- id: 52
+  label: has
+  pointingTo:
+    - 48
+- id: 19
+  label: memberOf
+  pointingTo:
+    - 27
+- id: 29
+  label: connects
+  pointingTo:
+    - 10
+    - 21
+- id: 28
+  label: memberOf
+  pointingTo:
+    - 27
+- id: 56
+  label: connects
+  pointingTo:
+    - 48
+    - 50
+- id: 25
+  label: memberOf
+  pointingTo:
+    - 24
+- id: 27
+  label: Interfaces
+- id: 24
+  label: Busses
