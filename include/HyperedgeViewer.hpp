@@ -26,10 +26,25 @@ class HyperedgeScene : public QGraphicsScene
         HyperedgeScene(QObject * parent = 0);
         ~HyperedgeScene();
 
+        void addItem(QGraphicsItem *item);
+        void removeItem(QGraphicsItem *item);
+
+    signals:
+        // Signals emitted
+        void edgeAdded(const unsigned int id);
+        void edgeRemoved(const unsigned int id);
+        void edgesConnected(const unsigned int fromId, const unsigned int toId);
+
     public slots:
         // This is the constructing function of the hyperedge scene
         // If no pointer is given it will reconstruct from lastRoot
         void visualize(Hyperedge *root = NULL);
+
+        // Slots to modify the underlying hyperedge system
+        void addEdge(const QString& label="");
+        void addEdgeAndConnect(const unsigned int toId, const QString& label="");
+        void removeEdge(const unsigned int id);
+        void connectEdges(const unsigned int fromId, const unsigned int toId);
 
     private:
         Hyperedge *lastRoot;
@@ -44,9 +59,10 @@ class ForceBasedScene : public HyperedgeScene
         ForceBasedScene(QObject * parent = 0);
         ~ForceBasedScene();
 
-        //bool isEnabled();
-        //void setEnabled(bool enable);
-        //void setEquilibriumDistance(qreal k);
+        // Adjust these if needed
+        bool isEnabled();
+        void setEnabled(bool enable);
+        void setEquilibriumDistance(qreal distance);
 
     public slots:
         // Cycles through all items of a scene and updates the positions of hyperedgeitems according to their neighbours
@@ -64,11 +80,12 @@ class HyperedgeView : public QGraphicsView
 
     public:
         HyperedgeView(QWidget *parent = 0);
-        HyperedgeView (HyperedgeScene * scene, QWidget * parent = 0 );
+        HyperedgeView(HyperedgeScene * scene, QWidget * parent = 0 );
 
-    //signals:
-        // Signal which is emitted if hyperedge x points to hyperedge y
-        //void edgeAdded(Hyperedge* x, Hyperedge* y);
+        HyperedgeScene* scene()
+        {
+            return dynamic_cast<HyperedgeScene*>(QGraphicsView::scene());
+        }
 
     protected:
         /// qt mouse wheel spin callback
@@ -76,7 +93,21 @@ class HyperedgeView : public QGraphicsView
         /// scales scene (zooms into or out of the scene)
         void scaleView(qreal scaleFactor);
 
-        // Mouse press and release event to move view and select things
+        // Mouse press and release event to move view
+        void mousePressEvent(QMouseEvent*);
+        void mouseReleaseEvent(QMouseEvent*);
+};
+
+class HyperedgeEdit : public HyperedgeView
+{
+    Q_OBJECT
+
+    public:
+        HyperedgeEdit(QWidget *parent = 0);
+        HyperedgeEdit(HyperedgeScene * scene, QWidget * parent = 0 );
+
+    protected:
+        // Mouse press and release event to select and connect things
         void mousePressEvent(QMouseEvent*);
         void mouseMoveEvent(QMouseEvent*);
         void mouseReleaseEvent(QMouseEvent*);
@@ -96,6 +127,7 @@ class HyperedgeView : public QGraphicsView
         HyperedgeItem* selectedItem;
 };
 
+
 class HyperedgeViewer : public QWidget
 {
     Q_OBJECT
@@ -107,8 +139,8 @@ class HyperedgeViewer : public QWidget
     private:
         Ui::HyperedgeViewer* mpUi;
 
-        ForceBasedScene* mpScene;
-        HyperedgeView* mpView;
+        ForceBasedScene*    mpScene;
+        HyperedgeEdit*      mpView;
 };
 
 #endif
