@@ -359,12 +359,14 @@ void HyperedgeEdit::keyPressEvent(QKeyEvent * event)
         currentLabel = "";
         currentLabel += event->text();
         Hyperedge::create(selectedItem->getHyperEdgeId(), currentLabel.toStdString());
+        setDefaultLabel(currentLabel);
     }
     else if (selectedItem && isEditLabelMode)
     {
         // Update current label
         currentLabel += event->text();
         Hyperedge::create(selectedItem->getHyperEdgeId(), currentLabel.toStdString());
+        setDefaultLabel(currentLabel);
     }
 
     QGraphicsView::keyPressEvent(event);
@@ -452,6 +454,7 @@ void HyperedgeEdit::mouseReleaseEvent(QMouseEvent* event)
 void HyperedgeEdit::setDefaultLabel(const QString& label)
 {
     currentLabel = label;
+    emit labelChanged(currentLabel);
 }
 
 HyperedgeViewer::HyperedgeViewer(QWidget *parent)
@@ -469,7 +472,7 @@ HyperedgeViewer::HyperedgeViewer(QWidget *parent)
 
     mpUi->usageLabel->setText("LMB: Select  RMB: Associate  WHEEL: Zoom  DEL: Delete  INS: Insert");
 
-    //loadFromYAMLFile("test.yml");
+    loadFromYAMLFile("test.yml");
 }
 
 HyperedgeViewer::~HyperedgeViewer()

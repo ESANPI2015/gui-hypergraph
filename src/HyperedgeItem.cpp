@@ -2,6 +2,7 @@
 #include <QWidget>
 #include <QPainter>
 #include <QColor>
+#include <QtCore>
 #include "Hyperedge.hpp"
 #include <iostream>
 
@@ -149,11 +150,18 @@ QRectF EdgeItem::boundingRect() const
     float w = qAbs(qMax(a.x(), b.x()) - x);    
     float h = qAbs(qMax(a.y(), b.y()) - y);    
 
-    return QRectF(x-1,y-1,w+2,h+2);
+    return QRectF(x-5,y-5,w+10,h+10);
 }
 
 void EdgeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
            QWidget *widget)
 {
+    // TODO: We definitely need some direction hint!
     painter->drawLine(mpSourceEdge->pos(), mpTargetEdge->pos());
+    QPointF delta(mpTargetEdge->pos() - mpSourceEdge->pos());
+    float len = qSqrt(delta.x() * delta.x() + delta.y() * delta.y() + 1);
+    QPointF circlePos(mpTargetEdge->pos() - delta / len * 40);
+    QRectF rect(circlePos.x()-5, circlePos.y()-5, 10, 10);
+    painter->setBrush(Qt::black);
+    painter->drawEllipse(rect);
 }

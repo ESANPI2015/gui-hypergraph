@@ -69,8 +69,6 @@ class ForceBasedScene : public HyperedgeScene
 
         // Adjust these if needed
         bool isEnabled();
-        void setEnabled(bool enable);
-        void setEquilibriumDistance(qreal distance);
 
     public slots:
         // Cycles through all items of a scene and updates the positions of hyperedgeitems according to their neighbours
@@ -80,6 +78,8 @@ class ForceBasedScene : public HyperedgeScene
             visualize(getAllEdges());
         }
         void visualize(Hyperedge::Hyperedges edges);
+        void setEnabled(bool enable);
+        void setEquilibriumDistance(qreal distance);
 
     private:
         QTimer *mpTimer;
@@ -117,6 +117,10 @@ class HyperedgeEdit : public HyperedgeView
     public:
         HyperedgeEdit(QWidget *parent = 0);
         HyperedgeEdit(HyperedgeScene * scene, QWidget * parent = 0 );
+
+    signals:
+        // emitted by setDefaultLabel()
+        void labelChanged(const QString& label);
 
     public slots:
         // Call this to set the label of all edges to be created in the future
