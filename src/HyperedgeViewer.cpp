@@ -9,12 +9,12 @@
 
 #include "Hyperedge.hpp"
 #include "HyperedgeYAML.hpp"
+#include <sstream>
 #include <iostream>
 
 HyperedgeScene::HyperedgeScene(QObject * parent)
 : QGraphicsScene(parent)
 {
-    lastRoot = NULL;
 }
 
 HyperedgeScene::~HyperedgeScene()
@@ -52,9 +52,7 @@ void HyperedgeScene::removeItem(QGraphicsItem *item)
 
 void HyperedgeScene::addEdge(const QString& label)
 {
-    std::cout 
-    << "addEdge(" << label.toStdString() << "): "
-    << "Dont know how to properly add a disconnected edge yet.\n";
+    allEdges.insert(Hyperedge::create(label.toStdString())->id());
 }
 
 void HyperedgeScene::addEdgeAndConnect(const unsigned int toId, const QString& label)
@@ -64,6 +62,7 @@ void HyperedgeScene::addEdgeAndConnect(const unsigned int toId, const QString& l
     {
         Hyperedge* source = Hyperedge::create(label.toStdString());
         source->pointTo(toId);
+        allEdges.insert(source->id());
     }
 }
 
@@ -86,44 +85,30 @@ void HyperedgeScene::connectEdges(const unsigned int fromId, const unsigned int 
     }
 }
 
-void HyperedgeScene::visualize(Hyperedge *root)
+void HyperedgeScene::visualize(Hyperedge::Hyperedges edges)
 {
-    // Handle pointers
-    if (!root && !lastRoot)
-        return;
-
-    if (!root)
-        root = lastRoot;
-    else
-        lastRoot = root;
-
-    // Then make a traversal through the graph, creating the corresponding items while checking a possible previous layout
+    // First we must merge allEdges & edges
+    // Then we go through all edges and check if we already have an HyperedgeItem or not
+    allEdges.insert(edges.begin(), edges.end());
     QMap<unsigned int,HyperedgeItem*> validItems;
-    Hyperedge *traversal = root->traversal<Hyperedge>
-              (
-               [&](Hyperedge *x){
-                    // Create or get item
-                    HyperedgeItem *item;
-                    if (!currentItems.contains(x->id()))
-                    {
-                        item = new HyperedgeItem(x);
-                        item->setPos(qrand() % 2000 - 1000, qrand() % 2000 - 1000);
-                        addItem(item);
-                        currentItems[x->id()] = item;
-                    } else {
-                        item = currentItems[x->id()];
-                    }
-                    validItems[x->id()] = item; 
-                    return false;
-                },
-               [](Hyperedge *x, Hyperedge *y){
-                    // NOTE: We cannot draw lines here, because we dont know the other objects we point to yet
-                    return true;
-                },
-               "visualizeFrom",
-               Hyperedge::TraversalDirection::BOTH
-              );
-    delete traversal;
+    for (auto edgeId : allEdges)
+    {
+        auto x = Hyperedge::find(edgeId);
+        if (!x)
+            continue;
+        // Create or get item
+        HyperedgeItem *item;
+        if (!currentItems.contains(x->id()))
+        {
+            item = new HyperedgeItem(x);
+            item->setPos(qrand() % 2000 - 1000, qrand() % 2000 - 1000);
+            addItem(item);
+            currentItems[x->id()] = item;
+        } else {
+            item = currentItems[x->id()];
+        }
+        validItems[x->id()] = item;
+    }
     
     // Everything which is in validItem should be wired
     QMap<unsigned int,HyperedgeItem*>::const_iterator it;
@@ -210,10 +195,10 @@ void ForceBasedScene::setEquilibriumDistance(qreal distance)
         mEquilibriumDistance = distance;
 }
 
-void ForceBasedScene::visualize(Hyperedge *root)
+void ForceBasedScene::visualize(Hyperedge::Hyperedges edges)
 {
     // First reconstruct the scene
-    HyperedgeScene::visualize(root);
+    HyperedgeScene::visualize(edges);
 
     // This is similar to Graph Drawing by Force-directed  Placement THOMAS M. J. FRUCHTERMAN* AND EDWARD M. REINGOLD 
     qreal k = mEquilibriumDistance;
@@ -264,47 +249,6 @@ void ForceBasedScene::visualize(Hyperedge *root)
     }
 }
 
-HyperedgeViewer::HyperedgeViewer(QWidget *parent)
-    : QWidget(parent)
-{
-    mpUi = new Ui::HyperedgeViewer();
-    mpUi->setupUi(this);
-
-    mpScene = new ForceBasedScene();
-    mpView = new HyperedgeEdit(mpScene);
-    mpView->show();
-    QVBoxLayout *layout = new QVBoxLayout();
-    layout->addWidget(mpView);
-    mpUi->View->setLayout(layout);
-
-    auto test = YAML::LoadFile("test.yml");
-    auto root  = YAML::load(test);
-    mpScene->visualize(root);
-}
-
-HyperedgeViewer::~HyperedgeViewer()
-{
-    delete mpView;
-    delete mpScene;
-    delete mpUi;
-}
-
-HyperedgeEdit::HyperedgeEdit(QWidget *parent)
-: HyperedgeView(parent)
-{
-    selectedItem = NULL;
-    lineItem = NULL;
-    isDrawLineMode = false;
-}
-
-HyperedgeEdit::HyperedgeEdit(HyperedgeScene * scene, QWidget * parent)
-: HyperedgeView(scene, parent)
-{
-    selectedItem = NULL;
-    lineItem = NULL;
-    isDrawLineMode = false;
-}
-
 HyperedgeView::HyperedgeView(QWidget *parent)
 : QGraphicsView(parent)
 {
@@ -339,6 +283,54 @@ void HyperedgeView::scaleView(qreal scaleFactor)
     scale(scaleFactor, scaleFactor);
 }
 
+void HyperedgeView::mouseReleaseEvent(QMouseEvent* event)
+{
+    // always try to reset drag mode, just to be sure
+    if (dragMode() != QGraphicsView::NoDrag) {
+        setDragMode(QGraphicsView::NoDrag);
+    }
+
+    QGraphicsView::mouseReleaseEvent(event);
+}
+
+void HyperedgeView::mousePressEvent(QMouseEvent* event)
+{
+    QGraphicsItem *item = itemAt(event->pos());
+    if (event->button() == Qt::LeftButton)
+    {
+        // Panning mode
+        // enable panning by pressing+dragging the left mouse button if there is
+        // _no_ HyperedgeItem under the cursor right now.
+        // else we have select item mode (if there is an item)
+        if (!item || !dynamic_cast<HyperedgeItem*>(item))
+        {
+            setDragMode(QGraphicsView::ScrollHandDrag);
+        }
+    }
+
+    QGraphicsView::mousePressEvent(event);
+}
+
+HyperedgeEdit::HyperedgeEdit(QWidget *parent)
+: HyperedgeView(parent)
+{
+    selectedItem = NULL;
+    lineItem = NULL;
+    isDrawLineMode = false;
+    currentLabel = "Name?";
+    isEditLabelMode = false;
+}
+
+HyperedgeEdit::HyperedgeEdit(HyperedgeScene * scene, QWidget * parent)
+: HyperedgeView(scene, parent)
+{
+    selectedItem = NULL;
+    lineItem = NULL;
+    isDrawLineMode = false;
+    currentLabel = "Name?";
+    isEditLabelMode = false;
+}
+
 void HyperedgeEdit::keyPressEvent(QKeyEvent * event)
 {
     if (event->key() == Qt::Key_Delete)
@@ -346,21 +338,33 @@ void HyperedgeEdit::keyPressEvent(QKeyEvent * event)
         if (selectedItem)
         {
             // Delete edge from graph
-            // FIXME: Furthermore, this operation could make a forest out of a single connected graph
-            // FIXME: Prevent the root from being deleted!
             scene()->removeEdge(selectedItem->getHyperEdgeId());
             selectedItem = NULL;
         }
     }
-    if (event->key() == Qt::Key_Insert)
+    else if (event->key() == Qt::Key_Insert)
     {
         if (selectedItem)
         {
             // Add an edge to the graph
-            scene()->addEdgeAndConnect(selectedItem->getHyperEdgeId(), "Name?");
+            scene()->addEdgeAndConnect(selectedItem->getHyperEdgeId(), currentLabel);
         } else {
-            std::cout << "Cannot insert disconnected edge\n";
+            scene()->addEdge(currentLabel);
         }
+    }
+    else if (selectedItem && !isEditLabelMode)
+    {
+        // Start label edit
+        isEditLabelMode = true;
+        currentLabel = "";
+        currentLabel += event->text();
+        Hyperedge::create(selectedItem->getHyperEdgeId(), currentLabel.toStdString());
+    }
+    else if (selectedItem && isEditLabelMode)
+    {
+        // Update current label
+        currentLabel += event->text();
+        Hyperedge::create(selectedItem->getHyperEdgeId(), currentLabel.toStdString());
     }
 
     QGraphicsView::keyPressEvent(event);
@@ -371,6 +375,7 @@ void HyperedgeEdit::mousePressEvent(QMouseEvent* event)
     QGraphicsItem *item = itemAt(event->pos());
     if (event->button() == Qt::LeftButton)
     {
+        isEditLabelMode = false;
         if (item)
         {
             // Select only HyperedgeItems
@@ -409,24 +414,6 @@ void HyperedgeEdit::mousePressEvent(QMouseEvent* event)
     HyperedgeView::mousePressEvent(event);
 }
 
-void HyperedgeView::mousePressEvent(QMouseEvent* event)
-{
-    QGraphicsItem *item = itemAt(event->pos());
-    if (event->button() == Qt::LeftButton)
-    {
-        // Panning mode
-        // enable panning by pressing+dragging the left mouse button if there is
-        // _no_ HyperedgeItem under the cursor right now.
-        // else we have select item mode (if there is an item)
-        if (!item || !dynamic_cast<HyperedgeItem*>(item))
-        {
-            setDragMode(QGraphicsView::ScrollHandDrag);
-        }
-    }
-
-    QGraphicsView::mousePressEvent(event);
-}
-
 void HyperedgeEdit::mouseMoveEvent(QMouseEvent* event)
 {
     // When in DRAW_LINE mode, update temporary visual line
@@ -462,13 +449,51 @@ void HyperedgeEdit::mouseReleaseEvent(QMouseEvent* event)
     HyperedgeView::mouseReleaseEvent(event);
 }
 
-void HyperedgeView::mouseReleaseEvent(QMouseEvent* event)
+void HyperedgeEdit::setDefaultLabel(const QString& label)
 {
-    // always try to reset drag mode, just to be sure
-    if (dragMode() != QGraphicsView::NoDrag) {
-        setDragMode(QGraphicsView::NoDrag);
-    }
-
-    QGraphicsView::mouseReleaseEvent(event);
+    currentLabel = label;
 }
 
+HyperedgeViewer::HyperedgeViewer(QWidget *parent)
+    : QWidget(parent)
+{
+    mpUi = new Ui::HyperedgeViewer();
+    mpUi->setupUi(this);
+
+    mpScene = new ForceBasedScene();
+    mpView = new HyperedgeEdit(mpScene);
+    mpView->show();
+    QVBoxLayout *layout = new QVBoxLayout();
+    layout->addWidget(mpView);
+    mpUi->View->setLayout(layout);
+
+    mpUi->usageLabel->setText("LMB: Select  RMB: Associate  WHEEL: Zoom  DEL: Delete  INS: Insert");
+
+    //loadFromYAMLFile("test.yml");
+}
+
+HyperedgeViewer::~HyperedgeViewer()
+{
+    delete mpView;
+    delete mpScene;
+    delete mpUi;
+}
+
+void HyperedgeViewer::loadFromYAMLFile(const QString& fileName)
+{
+    auto newEdges = YAML::load(YAML::LoadFile(fileName.toStdString())); // std::string >> YAML::Node >> Hyperedge::Hyperedges
+    mpScene->visualize(newEdges);
+}
+
+void HyperedgeViewer::loadFromYAML(const QString& yamlString)
+{
+    auto newEdges = YAML::load(YAML::Load(yamlString.toStdString()));
+    mpScene->visualize(newEdges);
+}
+
+void HyperedgeViewer::storeToYAML()
+{
+    std::stringstream result;
+    result << YAML::store(mpScene->getAllEdges()); // Hyperedge::Hyperedges >> YAML::Node >> std::string
+    emit YAMLStringReady(QString::fromStdString(result.str()));
+}

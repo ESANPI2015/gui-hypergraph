@@ -11,16 +11,9 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Hypergraph</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
-   <item>
-    <widget class="QLabel" name="label">
-     <property name="text">
-      <string>Hypergraph</string>
-     </property>
-    </widget>
-   </item>
    <item>
     <widget class="QFrame" name="View">
      <property name="sizePolicy">
@@ -34,6 +27,13 @@
      </property>
      <property name="frameShadow">
       <enum>QFrame::Raised</enum>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="usageLabel">
+     <property name="text">
+      <string>TextLabel</string>
      </property>
     </widget>
    </item>

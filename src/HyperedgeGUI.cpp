@@ -2,6 +2,7 @@
 #include "ui_HyperedgeGUI.h"
 
 #include "HyperedgeViewer.hpp"
+#include <QDockWidget>
 
 HyperedgeGUI::HyperedgeGUI(QWidget *parent)
     : QMainWindow(parent)
@@ -11,6 +12,12 @@ HyperedgeGUI::HyperedgeGUI(QWidget *parent)
 
     mpViewer = new HyperedgeViewer();
     setCentralWidget(mpViewer);
+
+    QDockWidget *dockWidget = new QDockWidget(tr("Dock Widget"), this);
+    dockWidget->setAllowedAreas(Qt::LeftDockWidgetArea |
+                                Qt::RightDockWidgetArea);
+    //dockWidget->setWidget(dockWidgetContents);
+    addDockWidget(Qt::LeftDockWidgetArea, dockWidget);
 }
 
 HyperedgeGUI::~HyperedgeGUI()
