@@ -4,7 +4,6 @@
 #include <QColor>
 #include <QtCore>
 #include "Hyperedge.hpp"
-#include <iostream>
 
 HyperedgeItem::HyperedgeItem(unsigned int id)
 : edgeId(id)

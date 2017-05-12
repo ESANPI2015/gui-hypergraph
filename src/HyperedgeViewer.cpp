@@ -472,7 +472,6 @@ HyperedgeViewer::HyperedgeViewer(QWidget *parent)
 
     mpUi->usageLabel->setText("LMB: Select  RMB: Associate  WHEEL: Zoom  DEL: Delete  INS: Insert");
 
-    loadFromYAMLFile("test.yml");
 }
 
 HyperedgeViewer::~HyperedgeViewer()

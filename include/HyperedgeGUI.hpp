@@ -11,6 +11,7 @@ namespace Ui
 
 // Forward declarations
 class HyperedgeViewer;
+class HyperedgeControl;
 
 class HyperedgeGUI : public QMainWindow
 {
@@ -20,11 +21,21 @@ class HyperedgeGUI : public QMainWindow
         HyperedgeGUI(QWidget *parent = 0);
         ~HyperedgeGUI();
 
+    public slots:
+        void loadHyperedgeSystemRequest();
+        void storeHyperedgeSystemRequest();
+        void onYAMLStringReady(const QString& yamlString);
+
     private:
         Ui::HyperedgeGUI* mpUi;
 
         // Add hyperedge viewer
         HyperedgeViewer* mpViewer;
+
+        // Add hyperedge control
+        HyperedgeControl* mpControl;
+        QString lastOpenedFile;
+        QString lastSavedFile;
 };
 
 #endif

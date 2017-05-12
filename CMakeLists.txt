@@ -45,11 +45,13 @@ set(SOURCES_gui
     src/main.cpp
     src/HyperedgeGUI.cpp
     src/HyperedgeViewer.cpp
+    src/HyperedgeControl.cpp
     src/HyperedgeItem.cpp
     )
 set(QT_HEADERS_gui # header which should be processed by moc
     include/HyperedgeGUI.hpp
     include/HyperedgeViewer.hpp
+    include/HyperedgeControl.hpp
     )
 set(HEADERS_gui # normal cpp-headers, for installing
     include/HyperedgeItem.hpp
@@ -57,6 +59,7 @@ set(HEADERS_gui # normal cpp-headers, for installing
 set(FORMS_gui
     forms/HyperedgeGUI.ui
     forms/HyperedgeViewer.ui
+    forms/HyperedgeControl.ui
     )
 set(RESOURCES_gui
 #    widgets_plotter.qrc
