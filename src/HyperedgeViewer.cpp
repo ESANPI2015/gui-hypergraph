@@ -245,7 +245,7 @@ void ForceBasedScene::visualize(Hyperedge::Hyperedges edges)
         auto edge = dynamic_cast<HyperedgeItem*>(item);
         if (!edge) continue;
 
-        edge->setPos(item->pos() + displacements[edge] / mEquilibriumDistance / 2);
+        edge->setPos(item->pos() + displacements[edge] / mEquilibriumDistance / 10);
     }
 }
 
