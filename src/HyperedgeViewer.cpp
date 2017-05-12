@@ -123,6 +123,9 @@ void HyperedgeScene::visualize(Hyperedge::Hyperedges edges)
                 continue;
             // Create line if needed
             auto destItem = validItems[otherId];
+            // Omit loops
+            if (srcItem == destItem)
+                continue;
             if (!srcItem->getEdgeItems().contains(otherId))
             {
                 auto line = new EdgeItem(srcItem, destItem);
