@@ -361,14 +361,22 @@ void HyperedgeEdit::keyPressEvent(QKeyEvent * event)
         isEditLabelMode = true;
         currentLabel = "";
         currentLabel += event->text();
-        Hyperedge::create(selectedItem->getHyperEdgeId(), currentLabel.toStdString());
+        auto edge = Hyperedge::find(selectedItem->getHyperEdgeId());
+        if (edge)
+        {
+            edge->updateLabel(currentLabel.toStdString());
+        }
         setDefaultLabel(currentLabel);
     }
     else if (selectedItem && isEditLabelMode)
     {
         // Update current label
         currentLabel += event->text();
-        Hyperedge::create(selectedItem->getHyperEdgeId(), currentLabel.toStdString());
+        auto edge = Hyperedge::find(selectedItem->getHyperEdgeId());
+        if (edge)
+        {
+            edge->updateLabel(currentLabel.toStdString());
+        }
         setDefaultLabel(currentLabel);
     }
 
