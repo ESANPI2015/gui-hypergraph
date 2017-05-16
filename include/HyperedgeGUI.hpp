@@ -22,6 +22,7 @@ class HyperedgeGUI : public QMainWindow
         ~HyperedgeGUI();
 
     public slots:
+        void clearHyperedgeSystemRequest();
         void loadHyperedgeSystemRequest();
         void storeHyperedgeSystemRequest();
         void onYAMLStringReady(const QString& yamlString);

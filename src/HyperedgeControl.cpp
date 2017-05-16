@@ -21,3 +21,8 @@ void HyperedgeControl::on_saveButton_clicked()
 {
     emit storeHyperedgeSystem();
 }
+
+void HyperedgeControl::on_clearButton_clicked()
+{
+    emit clearHyperedgeSystem();
+}

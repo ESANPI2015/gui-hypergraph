@@ -19,6 +19,7 @@ class HyperedgeControl : public QWidget
 
     signals:
         // Signals emitted by Buttons or something else
+        void clearHyperedgeSystem();
         void loadHyperedgeSystem();
         void storeHyperedgeSystem();
 
@@ -26,6 +27,7 @@ class HyperedgeControl : public QWidget
         // To be autoconnected
         void on_loadButton_clicked();
         void on_saveButton_clicked();
+        void on_clearButton_clicked();
 
     private:
         Ui::HyperedgeControl *mpUi;

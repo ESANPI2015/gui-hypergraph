@@ -6,6 +6,7 @@
 #include <QDockWidget>
 #include <QFileDialog>
 #include <QTextStream>
+#include "Hyperedge.hpp"
 
 HyperedgeGUI::HyperedgeGUI(QWidget *parent)
     : QMainWindow(parent)
@@ -27,6 +28,7 @@ HyperedgeGUI::HyperedgeGUI(QWidget *parent)
     lastSavedFile = "";
 
     // Connect control
+    connect(mpControl, SIGNAL(clearHyperedgeSystem()), this, SLOT(clearHyperedgeSystemRequest()));
     connect(mpControl, SIGNAL(loadHyperedgeSystem()), this, SLOT(loadHyperedgeSystemRequest()));
     connect(mpControl, SIGNAL(storeHyperedgeSystem()), this, SLOT(storeHyperedgeSystemRequest()));
 
@@ -37,6 +39,11 @@ HyperedgeGUI::HyperedgeGUI(QWidget *parent)
 HyperedgeGUI::~HyperedgeGUI()
 {
     delete mpUi;
+}
+
+void HyperedgeGUI::clearHyperedgeSystemRequest()
+{
+    Hyperedge::cleanup();
 }
 
 void HyperedgeGUI::loadHyperedgeSystemRequest()
