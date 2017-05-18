@@ -5,8 +5,9 @@
 #include <QtCore>
 #include "Hyperedge.hpp"
 
-HyperedgeItem::HyperedgeItem(unsigned int id)
-: edgeId(id)
+HyperedgeItem::HyperedgeItem(const unsigned int id, const QString& l)
+: edgeId(id),
+  label(l)
 {
     mLabelHeight = 10;
     mLabelWidth = 20;
@@ -18,7 +19,8 @@ HyperedgeItem::HyperedgeItem(unsigned int id)
 }
 
 HyperedgeItem::HyperedgeItem(Hyperedge *edge)
-: edgeId(edge->id())
+: edgeId(edge->id()),
+  label(QString::fromStdString(edge->label()))
 {
     mLabelHeight = 10;
     mLabelWidth = 20;
@@ -31,11 +33,6 @@ HyperedgeItem::HyperedgeItem(Hyperedge *edge)
 
 HyperedgeItem::~HyperedgeItem()
 {
-}
-
-Hyperedge* HyperedgeItem::getHyperEdge()
-{
-    return Hyperedge::find(edgeId);
 }
 
 void HyperedgeItem::setHighlight(bool choice)
@@ -100,10 +97,7 @@ void HyperedgeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
            QWidget *widget)
 {
     QFontMetrics fm(widget->fontMetrics());
-    Hyperedge* mpEdge = getHyperEdge();
-    if (!mpEdge)
-        return;
-    mLabelWidth = qMax(fm.width(mpEdge->label().c_str()), 20);
+    mLabelWidth = qMax(fm.width(label), 20);
     mLabelHeight = qMax(fm.height(), 10);
 
     if (highlighted)
@@ -111,7 +105,7 @@ void HyperedgeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
     else
         painter->setBrush(Qt::white);
     painter->drawRoundedRect(-mLabelWidth/2-5, -mLabelHeight/2-5, mLabelWidth+10, mLabelHeight+10, 5, 5);
-    painter->drawText(-mLabelWidth/2, mLabelHeight/2-3, mpEdge->label().c_str());
+    painter->drawText(-mLabelWidth/2, mLabelHeight/2-3, label);
 }
 
 EdgeItem::EdgeItem(HyperedgeItem *from, HyperedgeItem *to)

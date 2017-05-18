@@ -8,6 +8,7 @@
 #include <QtCore>
 
 #include "Hyperedge.hpp"
+#include "Hypergraph.hpp"
 #include "HyperedgeYAML.hpp"
 #include <sstream>
 #include <iostream>
@@ -15,10 +16,13 @@
 HyperedgeScene::HyperedgeScene(QObject * parent)
 : QGraphicsScene(parent)
 {
+    currentGraph = new Hypergraph();
 }
 
 HyperedgeScene::~HyperedgeScene()
 {
+    if (currentGraph)
+        delete currentGraph;
 }
 
 void HyperedgeScene::addItem(QGraphicsItem *item)
@@ -52,48 +56,73 @@ void HyperedgeScene::removeItem(QGraphicsItem *item)
 
 void HyperedgeScene::addEdge(const QString& label)
 {
-    allEdges.insert(Hyperedge::create(label.toStdString())->id());
+    //allEdges.insert(Hyperedge::create(label.toStdString())->id());
+    if (currentGraph)
+        currentGraph->create(label.toStdString());
 }
 
 void HyperedgeScene::addEdgeAndConnect(const unsigned int toId, const QString& label)
 {
-    Hyperedge* target = Hyperedge::find(toId);
-    if (target)
-    {
-        Hyperedge* source = Hyperedge::create(label.toStdString());
-        source->pointTo(toId);
-        allEdges.insert(source->id());
-    }
+    //Hyperedge* target = Hyperedge::find(toId);
+    //if (target)
+    //{
+    //    Hyperedge* source = Hyperedge::create(label.toStdString());
+    //    source->pointTo(toId);
+    //    allEdges.insert(source->id());
+    //}
+    if (currentGraph)
+        currentGraph->fromTo(currentGraph->create(label.toStdString()), toId);
 }
 
 void HyperedgeScene::removeEdge(const unsigned int id)
 {
-    Hyperedge* edge = Hyperedge::find(id);
-    // Already deleted?
-    if (!edge) return;
-    // Delete the model edge
-    delete edge;
+    //Hyperedge* edge = Hyperedge::find(id);
+    //// Already deleted?
+    //if (!edge) return;
+    //// Delete the model edge
+    //delete edge;
+
+    //if (currentGraph)
+    //    currentGraph->destroy(id);
 }
 
 void HyperedgeScene::connectEdges(const unsigned int fromId, const unsigned int toId)
 {
-    Hyperedge* source = Hyperedge::find(fromId);
-    Hyperedge* target = Hyperedge::find(toId);
-    if (source && target)
-    {
-        source->pointTo(toId);
-    }
+    //Hyperedge* source = Hyperedge::find(fromId);
+    //Hyperedge* target = Hyperedge::find(toId);
+    //if (source && target)
+    //{
+    //    source->pointTo(toId);
+    //}
+    if (currentGraph)
+        currentGraph->fromTo(fromId, toId);
 }
 
-void HyperedgeScene::visualize(Hyperedge::Hyperedges edges)
+void HyperedgeScene::updateEdge(const unsigned int id, const QString& label)
 {
-    // First we must merge allEdges & edges
+    if (currentGraph)
+        currentGraph->get(id)->updateLabel(label.toStdString());
+}
+
+void HyperedgeScene::visualize(Hypergraph* graph)
+{
+    // If new graph is given, ...
+    if (graph)
+    {
+        // destroy old one
+        if (currentGraph)
+            delete currentGraph;
+        currentGraph = graph;
+    }
+
+    // Now get all edges of the graph
+    auto allEdges = currentGraph->find();
+
     // Then we go through all edges and check if we already have an HyperedgeItem or not
-    allEdges.insert(edges.begin(), edges.end());
     QMap<unsigned int,HyperedgeItem*> validItems;
     for (auto edgeId : allEdges)
     {
-        auto x = Hyperedge::find(edgeId);
+        auto x = currentGraph->get(edgeId);
         if (!x)
             continue;
         // Create or get item
@@ -116,7 +145,7 @@ void HyperedgeScene::visualize(Hyperedge::Hyperedges edges)
     {
         auto edgeId = it.key();
         auto srcItem = it.value();
-        auto edge = Hyperedge::find(edgeId);
+        auto edge = currentGraph->get(edgeId);
         for (auto otherId : edge->pointingTo())
         {
             if (!validItems.contains(otherId))
@@ -198,10 +227,10 @@ void ForceBasedScene::setEquilibriumDistance(qreal distance)
         mEquilibriumDistance = distance;
 }
 
-void ForceBasedScene::visualize(Hyperedge::Hyperedges edges)
+void ForceBasedScene::visualize(Hypergraph *graph)
 {
     // First reconstruct the scene
-    HyperedgeScene::visualize(edges);
+    HyperedgeScene::visualize(graph);
 
     // This is similar to Graph Drawing by Force-directed  Placement THOMAS M. J. FRUCHTERMAN* AND EDWARD M. REINGOLD 
     qreal k = mEquilibriumDistance;
@@ -361,22 +390,14 @@ void HyperedgeEdit::keyPressEvent(QKeyEvent * event)
         isEditLabelMode = true;
         currentLabel = "";
         currentLabel += event->text();
-        auto edge = Hyperedge::find(selectedItem->getHyperEdgeId());
-        if (edge)
-        {
-            edge->updateLabel(currentLabel.toStdString());
-        }
+        scene()->updateEdge(selectedItem->getHyperEdgeId(), currentLabel);
         setDefaultLabel(currentLabel);
     }
     else if (selectedItem && isEditLabelMode)
     {
         // Update current label
         currentLabel += event->text();
-        auto edge = Hyperedge::find(selectedItem->getHyperEdgeId());
-        if (edge)
-        {
-            edge->updateLabel(currentLabel.toStdString());
-        }
+        scene()->updateEdge(selectedItem->getHyperEdgeId(), currentLabel);
         setDefaultLabel(currentLabel);
     }
 
@@ -494,19 +515,22 @@ HyperedgeViewer::~HyperedgeViewer()
 
 void HyperedgeViewer::loadFromYAMLFile(const QString& fileName)
 {
-    auto newEdges = YAML::load(YAML::LoadFile(fileName.toStdString())); // std::string >> YAML::Node >> Hyperedge::Hyperedges
-    mpScene->visualize(newEdges);
+    auto newGraph = YAML::LoadFile(fileName.toStdString()).as<Hypergraph*>(); // std::string >> YAML::Node >> Hypergraph*
+    mpScene->visualize(newGraph);
 }
 
 void HyperedgeViewer::loadFromYAML(const QString& yamlString)
 {
-    auto newEdges = YAML::load(YAML::Load(yamlString.toStdString()));
-    mpScene->visualize(newEdges);
+    auto newGraph = YAML::Load(yamlString.toStdString()).as<Hypergraph*>();
+    mpScene->visualize(newGraph);
 }
 
 void HyperedgeViewer::storeToYAML()
 {
-    std::stringstream result;
-    result << YAML::store(mpScene->getAllEdges()); // Hyperedge::Hyperedges >> YAML::Node >> std::string
-    emit YAMLStringReady(QString::fromStdString(result.str()));
+    if (mpScene->graph())
+    {
+        std::stringstream result;
+        result << mpScene->graph();
+        emit YAMLStringReady(QString::fromStdString(result.str()));
+    }
 }

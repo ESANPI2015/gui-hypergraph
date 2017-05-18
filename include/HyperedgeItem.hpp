@@ -11,7 +11,7 @@ class HyperedgeItem : public QGraphicsItem
 {
     public:
         HyperedgeItem(Hyperedge* edge);
-        HyperedgeItem(unsigned int id);
+        HyperedgeItem(const unsigned int id, const QString& l);
         virtual ~HyperedgeItem();
 
         QRectF boundingRect() const;
@@ -19,7 +19,6 @@ class HyperedgeItem : public QGraphicsItem
         void paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
                    QWidget *widget);
 
-        Hyperedge* getHyperEdge();
         unsigned int getHyperEdgeId()
         {
             return edgeId;
@@ -47,6 +46,7 @@ class HyperedgeItem : public QGraphicsItem
 
     private:
         unsigned int edgeId;
+        QString label;
         bool highlighted;
 
         int mLabelWidth;
