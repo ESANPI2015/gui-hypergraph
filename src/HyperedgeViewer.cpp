@@ -56,44 +56,24 @@ void HyperedgeScene::removeItem(QGraphicsItem *item)
 
 void HyperedgeScene::addEdge(const QString& label)
 {
-    //allEdges.insert(Hyperedge::create(label.toStdString())->id());
     if (currentGraph)
         currentGraph->create(label.toStdString());
 }
 
 void HyperedgeScene::addEdgeAndConnect(const unsigned int toId, const QString& label)
 {
-    //Hyperedge* target = Hyperedge::find(toId);
-    //if (target)
-    //{
-    //    Hyperedge* source = Hyperedge::create(label.toStdString());
-    //    source->pointTo(toId);
-    //    allEdges.insert(source->id());
-    //}
     if (currentGraph)
         currentGraph->fromTo(currentGraph->create(label.toStdString()), toId);
 }
 
 void HyperedgeScene::removeEdge(const unsigned int id)
 {
-    //Hyperedge* edge = Hyperedge::find(id);
-    //// Already deleted?
-    //if (!edge) return;
-    //// Delete the model edge
-    //delete edge;
-
-    //if (currentGraph)
-    //    currentGraph->destroy(id);
+    if (currentGraph)
+        currentGraph->destroy(id);
 }
 
 void HyperedgeScene::connectEdges(const unsigned int fromId, const unsigned int toId)
 {
-    //Hyperedge* source = Hyperedge::find(fromId);
-    //Hyperedge* target = Hyperedge::find(toId);
-    //if (source && target)
-    //{
-    //    source->pointTo(toId);
-    //}
     if (currentGraph)
         currentGraph->fromTo(fromId, toId);
 }
@@ -530,7 +510,9 @@ void HyperedgeViewer::storeToYAML()
     if (mpScene->graph())
     {
         std::stringstream result;
-        result << mpScene->graph();
+        YAML::Node node;
+        node = mpScene->graph();
+        result << node;
         emit YAMLStringReady(QString::fromStdString(result.str()));
     }
 }
