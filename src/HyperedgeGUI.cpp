@@ -43,7 +43,7 @@ HyperedgeGUI::~HyperedgeGUI()
 
 void HyperedgeGUI::clearHyperedgeSystemRequest()
 {
-    //Hyperedge::cleanup();
+    mpViewer->clearHyperedgeSystem();
 }
 
 void HyperedgeGUI::loadHyperedgeSystemRequest()

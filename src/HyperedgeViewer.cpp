@@ -89,10 +89,11 @@ void HyperedgeScene::visualize(Hypergraph* graph)
     // If new graph is given, ...
     if (graph)
     {
+        // Merge graphs
+        auto mergedGraph = Hypergraph::Union(currentGraph, graph);
         // destroy old one
-        if (currentGraph)
-            delete currentGraph;
-        currentGraph = graph;
+        delete currentGraph;
+        currentGraph = mergedGraph;
     }
 
     // Now get all edges of the graph
@@ -126,6 +127,8 @@ void HyperedgeScene::visualize(Hypergraph* graph)
         auto edgeId = it.key();
         auto srcItem = it.value();
         auto edge = currentGraph->get(edgeId);
+        // Make sure that item and edge share the same label
+        srcItem->setLabel(QString::fromStdString(edge->label()));
         for (auto otherId : edge->pointingTo())
         {
             if (!validItems.contains(otherId))
@@ -497,12 +500,14 @@ void HyperedgeViewer::loadFromYAMLFile(const QString& fileName)
 {
     auto newGraph = YAML::LoadFile(fileName.toStdString()).as<Hypergraph*>(); // std::string >> YAML::Node >> Hypergraph*
     mpScene->visualize(newGraph);
+    delete newGraph;
 }
 
 void HyperedgeViewer::loadFromYAML(const QString& yamlString)
 {
     auto newGraph = YAML::Load(yamlString.toStdString()).as<Hypergraph*>();
     mpScene->visualize(newGraph);
+    delete newGraph;
 }
 
 void HyperedgeViewer::storeToYAML()
@@ -514,5 +519,15 @@ void HyperedgeViewer::storeToYAML()
         node = mpScene->graph();
         result << node;
         emit YAMLStringReady(QString::fromStdString(result.str()));
+    }
+}
+
+void HyperedgeViewer::clearHyperedgeSystem()
+{
+    if (mpScene->graph())
+    {
+        auto edges = mpScene->graph()->find();
+        for (auto edgeId : edges)
+            mpScene->graph()->destroy(edgeId);
     }
 }

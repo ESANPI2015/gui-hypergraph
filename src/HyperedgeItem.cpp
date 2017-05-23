@@ -35,6 +35,12 @@ HyperedgeItem::~HyperedgeItem()
 {
 }
 
+void HyperedgeItem::setLabel(const QString& l)
+{
+    prepareGeometryChange();
+    label = l;
+}
+
 void HyperedgeItem::setHighlight(bool choice)
 {
     prepareGeometryChange();

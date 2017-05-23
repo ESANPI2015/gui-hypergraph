@@ -169,6 +169,8 @@ class HyperedgeViewer : public QWidget
         void loadFromYAML(const QString& yamlString);
         // Store a hyperedge system (= hypergraph) to a YAML string
         void storeToYAML();
+        // Clear everything
+        void clearHyperedgeSystem();
 
     private:
         Ui::HyperedgeViewer* mpUi;

@@ -35,6 +35,9 @@ class HyperedgeItem : public QGraphicsItem
         void setHighlight(bool choice);
         bool isHighlighted();
 
+        // Change the label
+        void setLabel(const QString& l);
+
         QMap<unsigned int, EdgeItem*> getEdgeItems()
         {
             return mEdgeMap;
