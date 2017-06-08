@@ -156,15 +156,27 @@ QRectF EdgeItem::boundingRect() const
 void EdgeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
            QWidget *widget)
 {
-    painter->drawLine(mpSourceEdge->pos(), mpTargetEdge->pos());
-    // Draw the circle only for TO edges
+    // Get the length and the vector between source and target
+    QPointF delta(mpTargetEdge->pos() - mpSourceEdge->pos());
+    float len = qSqrt(delta.x() * delta.x() + delta.y() * delta.y() + 1);
+
+    // Calculate the maximum radius at which a direction identifier should be placed
+    QRectF targetRect(mpTargetEdge->boundingRect());
+    float maxR = qSqrt(targetRect.width() * targetRect.width() + targetRect.height() * targetRect.height()) / 2;
+    QPointF circlePos(mpTargetEdge->pos() - delta / len * maxR);
+    QRectF rect(circlePos.x()-5, circlePos.y()-5, 10, 10);
+
+    // Decide how to draw circle
     if (mType == TO)
     {
-        QPointF delta(mpTargetEdge->pos() - mpSourceEdge->pos());
-        float len = qSqrt(delta.x() * delta.x() + delta.y() * delta.y() + 1);
-        QPointF circlePos(mpTargetEdge->pos() - delta / len * 40);
-        QRectF rect(circlePos.x()-5, circlePos.y()-5, 10, 10);
+        // Draw the circle black for TO edges
         painter->setBrush(Qt::black);
-        painter->drawEllipse(rect);
+    } else {
+        // or white otherwise
+        painter->setBrush(Qt::white);
     }
+
+    // paint
+    painter->drawLine(mpSourceEdge->pos(), mpTargetEdge->pos());
+    painter->drawEllipse(rect);
 }
