@@ -55,23 +55,23 @@ bool HyperedgeItem::isHighlighted()
 void HyperedgeItem::updateEdgeItems()
 {
     prepareGeometryChange();
-    for (auto edge : mEdgeMap)
+    for (auto edge : mEdgeSet)
     {
         edge->adjust();
     }
 }
 
-void HyperedgeItem::registerEdgeItem(unsigned int otherId, EdgeItem *line)
+void HyperedgeItem::registerEdgeItem(EdgeItem *line)
 {
-    if (!mEdgeMap.contains(otherId))
+    if (!mEdgeSet.contains(line))
     {
-        mEdgeMap[otherId] = line;
+        mEdgeSet.insert(line);
     }
 }
 
-void HyperedgeItem::deregisterEdgeItem(unsigned int otherId)
+void HyperedgeItem::deregisterEdgeItem(EdgeItem *line)
 {
-    mEdgeMap.remove(otherId);
+    mEdgeSet.remove(line);
 }
 
 QVariant HyperedgeItem::itemChange(GraphicsItemChange change,
@@ -114,12 +114,13 @@ void HyperedgeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
     painter->drawText(-mLabelWidth/2, mLabelHeight/2-3, label);
 }
 
-EdgeItem::EdgeItem(HyperedgeItem *from, HyperedgeItem *to)
+EdgeItem::EdgeItem(HyperedgeItem *from, HyperedgeItem *to, const Type type)
 : mpSourceEdge(from),
-  mpTargetEdge(to)
+  mpTargetEdge(to),
+  mType(type)
 {
-    from->registerEdgeItem(to->getHyperEdgeId(), this);
-    to->registerEdgeItem(from->getHyperEdgeId(), this);
+    from->registerEdgeItem(this);
+    to->registerEdgeItem(this);
     setVisible(true);
 }
 
@@ -129,8 +130,8 @@ EdgeItem::~EdgeItem()
 
 void EdgeItem::deregister()
 {
-    mpSourceEdge->deregisterEdgeItem(mpTargetEdge->getHyperEdgeId());
-    mpTargetEdge->deregisterEdgeItem(mpSourceEdge->getHyperEdgeId());
+    mpSourceEdge->deregisterEdgeItem(this);
+    mpTargetEdge->deregisterEdgeItem(this);
 }
 
 void EdgeItem::adjust()
@@ -155,12 +156,15 @@ QRectF EdgeItem::boundingRect() const
 void EdgeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
            QWidget *widget)
 {
-    // TODO: We definitely need some direction hint!
     painter->drawLine(mpSourceEdge->pos(), mpTargetEdge->pos());
-    QPointF delta(mpTargetEdge->pos() - mpSourceEdge->pos());
-    float len = qSqrt(delta.x() * delta.x() + delta.y() * delta.y() + 1);
-    QPointF circlePos(mpTargetEdge->pos() - delta / len * 40);
-    QRectF rect(circlePos.x()-5, circlePos.y()-5, 10, 10);
-    painter->setBrush(Qt::black);
-    painter->drawEllipse(rect);
+    // Draw the circle only for TO edges
+    if (mType == TO)
+    {
+        QPointF delta(mpTargetEdge->pos() - mpSourceEdge->pos());
+        float len = qSqrt(delta.x() * delta.x() + delta.y() * delta.y() + 1);
+        QPointF circlePos(mpTargetEdge->pos() - delta / len * 40);
+        QRectF rect(circlePos.x()-5, circlePos.y()-5, 10, 10);
+        painter->setBrush(Qt::black);
+        painter->drawEllipse(rect);
+    }
 }

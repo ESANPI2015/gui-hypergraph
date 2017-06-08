@@ -140,9 +140,50 @@ void HyperedgeScene::visualize(Hypergraph* graph)
             // Omit loops
             if (srcItem == destItem)
                 continue;
-            if (!srcItem->getEdgeItems().contains(otherId))
+            // Check if there is an edgeitem of type TO which points to destItem
+            bool found = false;
+            auto myEdgeItems = srcItem->getEdgeItems();
+            for (auto line : myEdgeItems)
             {
-                auto line = new EdgeItem(srcItem, destItem);
+                if (line->getType() != EdgeItem::TO)
+                    continue;
+                if (line->getTargetItem() == destItem)
+                {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+            {
+                auto line = new EdgeItem(srcItem, destItem, EdgeItem::TO);
+                addItem(line);
+            }
+        }
+        for (auto otherId : edge->pointingFrom())
+        {
+            if (!validItems.contains(otherId))
+                continue;
+            // Create line if needed
+            auto destItem = validItems[otherId];
+            // Omit loops
+            if (srcItem == destItem)
+                continue;
+            // Check if there is an edgeitem of type TO which points to destItem
+            bool found = false;
+            auto myEdgeItems = srcItem->getEdgeItems();
+            for (auto line : myEdgeItems)
+            {
+                if (line->getType() != EdgeItem::FROM)
+                    continue;
+                if (line->getTargetItem() == destItem)
+                {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+            {
+                auto line = new EdgeItem(srcItem, destItem, EdgeItem::FROM);
                 addItem(line);
             }
         }
@@ -157,8 +198,8 @@ void HyperedgeScene::visualize(Hypergraph* graph)
         if (validItems.contains(id))
             continue;
         auto item = it.value();
-        auto edgeMap = item->getEdgeItems();
-        for (auto edge : edgeMap)
+        auto edgeSet = item->getEdgeItems();
+        for (auto edge : edgeSet)
         {
             edge->deregister();
             delete edge;

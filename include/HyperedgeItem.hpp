@@ -2,7 +2,7 @@
 #define _HYPEREDGE_ITEM_HPP
 
 #include <QGraphicsItem>
-#include <QVector>
+#include <QSet>
 
 class Hyperedge;
 class EdgeItem;
@@ -25,8 +25,8 @@ class HyperedgeItem : public QGraphicsItem
         }
 
         // Method to register edge items at the hyperedge item
-        void registerEdgeItem(unsigned int otherId, EdgeItem *line);
-        void deregisterEdgeItem(unsigned int otherId);
+        void registerEdgeItem(EdgeItem *line);
+        void deregisterEdgeItem(EdgeItem *line);
 
         // Tell all registered edge items to update themselves!!!
         void updateEdgeItems();
@@ -38,9 +38,9 @@ class HyperedgeItem : public QGraphicsItem
         // Change the label
         void setLabel(const QString& l);
 
-        QMap<unsigned int, EdgeItem*> getEdgeItems()
+        QSet<EdgeItem*> getEdgeItems()
         {
-            return mEdgeMap;
+            return mEdgeSet;
         }
 
     protected:
@@ -54,13 +54,18 @@ class HyperedgeItem : public QGraphicsItem
 
         int mLabelWidth;
         int mLabelHeight;
-        QMap<unsigned int, EdgeItem*> mEdgeMap;
+        QSet<EdgeItem*> mEdgeSet;
 };
 
 class EdgeItem : public QGraphicsItem
 {
     public:
-        EdgeItem(HyperedgeItem *from, HyperedgeItem *to);
+        enum Type {
+            TO,
+            FROM
+        };
+
+        EdgeItem(HyperedgeItem *from, HyperedgeItem *to, const Type type=TO);
         virtual ~EdgeItem();
 
         QRectF boundingRect() const;
@@ -82,10 +87,15 @@ class EdgeItem : public QGraphicsItem
         {
             return mpTargetEdge;
         }
+        Type getType()
+        {
+            return mType;
+        }
 
     private:
         HyperedgeItem* mpSourceEdge;
         HyperedgeItem* mpTargetEdge;
+        Type mType;
 };
 
 #endif
