@@ -62,8 +62,9 @@ void HyperedgeScene::addEdge(const QString& label)
 
 void HyperedgeScene::addEdgeAndConnect(const unsigned int toId, const QString& label)
 {
+    // FIXME: This is now difficult. Do we want to add it to the from or the to set?
     if (currentGraph)
-        currentGraph->fromTo(currentGraph->create(label.toStdString()), toId);
+        currentGraph->to(currentGraph->create(label.toStdString()), toId);
 }
 
 void HyperedgeScene::removeEdge(const unsigned int id)
@@ -74,8 +75,9 @@ void HyperedgeScene::removeEdge(const unsigned int id)
 
 void HyperedgeScene::connectEdges(const unsigned int fromId, const unsigned int toId)
 {
+    // FIXME: This is now difficult. Do we want to add it to the from or the to set?
     if (currentGraph)
-        currentGraph->fromTo(fromId, toId);
+        currentGraph->to(fromId, toId);
 }
 
 void HyperedgeScene::updateEdge(const unsigned int id, const QString& label)
@@ -90,7 +92,7 @@ void HyperedgeScene::visualize(Hypergraph* graph)
     if (graph)
     {
         // Merge graphs
-        auto mergedGraph = Hypergraph::Union(currentGraph, graph);
+        auto mergedGraph = new Hypergraph(*currentGraph, *graph);
         // destroy old one
         delete currentGraph;
         currentGraph = mergedGraph;
