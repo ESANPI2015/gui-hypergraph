@@ -57,14 +57,23 @@ void HyperedgeScene::removeItem(QGraphicsItem *item)
 void HyperedgeScene::addEdge(const QString& label)
 {
     if (currentGraph)
-        currentGraph->create(label.toStdString());
+    {
+        // Find a nice available id for it
+        unsigned id = qHash(label);
+        while (!currentGraph->create(id, label.toStdString())) id++;
+    }
 }
 
 void HyperedgeScene::addEdgeAndConnect(const unsigned int toId, const QString& label)
 {
     // FIXME: This is now difficult. Do we want to add it to the from or the to set?
     if (currentGraph)
-        currentGraph->to(currentGraph->create(label.toStdString()), toId);
+    {
+        // Find a nice available id for it
+        unsigned id = qHash(label);
+        while (!currentGraph->create(id, label.toStdString())) id++;
+        currentGraph->to(id, toId);
+    }
 }
 
 void HyperedgeScene::removeEdge(const unsigned int id)
