@@ -47,7 +47,6 @@ class HyperedgeItem : public QGraphicsItem
         /*Callback to inform others when the item changed position or size*/
         virtual QVariant itemChange(GraphicsItemChange change, const QVariant& value);
 
-    private:
         unsigned int edgeId;
         QString label;
         bool highlighted;
@@ -92,7 +91,7 @@ class EdgeItem : public QGraphicsItem
             return mType;
         }
 
-    private:
+    protected:
         HyperedgeItem* mpSourceEdge;
         HyperedgeItem* mpTargetEdge;
         Type mType;

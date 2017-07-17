@@ -10,7 +10,8 @@ namespace Ui
 }
 
 // Forward declarations
-class HyperedgeViewer;
+//class HyperedgeViewer;
+class ConceptgraphViewer;
 class HyperedgeControl;
 
 class HyperedgeGUI : public QMainWindow
@@ -31,7 +32,7 @@ class HyperedgeGUI : public QMainWindow
         Ui::HyperedgeGUI* mpUi;
 
         // Add hyperedge viewer
-        HyperedgeViewer* mpViewer;
+        ConceptgraphViewer* mpViewer;
 
         // Add hyperedge control
         HyperedgeControl* mpControl;

@@ -1,7 +1,8 @@
 #include "HyperedgeGUI.hpp"
 #include "ui_HyperedgeGUI.h"
 
-#include "HyperedgeViewer.hpp"
+//#include "HyperedgeViewer.hpp"
+#include "ConceptgraphViewer.hpp"
 #include "HyperedgeControl.hpp"
 #include <QDockWidget>
 #include <QFileDialog>
@@ -14,7 +15,7 @@ HyperedgeGUI::HyperedgeGUI(QWidget *parent)
     mpUi = new Ui::HyperedgeGUI();
     mpUi->setupUi(this);
 
-    mpViewer = new HyperedgeViewer();
+    mpViewer = new ConceptgraphViewer();
     setCentralWidget(mpViewer);
 
     QDockWidget *dockWidget = new QDockWidget(NULL, this);
@@ -43,7 +44,7 @@ HyperedgeGUI::~HyperedgeGUI()
 
 void HyperedgeGUI::clearHyperedgeSystemRequest()
 {
-    mpViewer->clearHyperedgeSystem();
+    mpViewer->clearConceptgraphSystem();
 }
 
 void HyperedgeGUI::loadHyperedgeSystemRequest()

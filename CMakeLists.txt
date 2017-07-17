@@ -45,16 +45,20 @@ set(SOURCES_gui
     src/main.cpp
     src/HyperedgeGUI.cpp
     src/HyperedgeViewer.cpp
+    src/ConceptgraphViewer.cpp
     src/HyperedgeControl.cpp
     src/HyperedgeItem.cpp
+    src/ConceptgraphItem.cpp
     )
 set(QT_HEADERS_gui # header which should be processed by moc
     include/HyperedgeGUI.hpp
     include/HyperedgeViewer.hpp
+    include/ConceptgraphViewer.hpp
     include/HyperedgeControl.hpp
     )
 set(HEADERS_gui # normal cpp-headers, for installing
     include/HyperedgeItem.hpp
+    include/ConceptgraphItem.hpp
     )
 set(FORMS_gui
     forms/HyperedgeGUI.ui
