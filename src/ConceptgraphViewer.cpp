@@ -59,10 +59,8 @@ void ConceptgraphScene::addConcept(const unsigned id, const QString& label)
 {
     if (currentGraph)
     {
-        if (!id)
-            currentGraph->create(label.toStdString());
-        else
-            currentGraph->create(id, label.toStdString());
+        unsigned theId = id > 0 ? id : qHash(label);
+        while (!currentGraph->create(theId, label.toStdString())) theId++;
     }
 }
 
@@ -70,10 +68,8 @@ void ConceptgraphScene::addRelation(const unsigned fromId, const unsigned toId, 
 {
     if (currentGraph)
     {
-        if (!id)
-            currentGraph->relate(fromId, toId, label.toStdString());
-        else
-            currentGraph->relate(id, fromId, toId, label.toStdString());
+        unsigned theId = id > 0 ? id : qHash(label);
+        while (!currentGraph->relate(theId, fromId, toId, label.toStdString())) theId++;
     }
 }
 
@@ -410,7 +406,7 @@ void ConceptgraphEdit::keyPressEvent(QKeyEvent * event)
     }
     else if (event->key() == Qt::Key_Insert)
     {
-        scene()->addConcept(0, currentLabel);
+        scene()->addConcept(0, "Name?");
     }
     else if (selectedItem && !isEditLabelMode)
     {
@@ -498,7 +494,7 @@ void ConceptgraphEdit::mouseReleaseEvent(QMouseEvent* event)
         {
             // Add model edge
             std::cout << "Create relation\n";
-            scene()->addRelation(sourceItem->getHyperEdgeId(), edge->getHyperEdgeId(), 0, "NewRelation");
+            scene()->addRelation(sourceItem->getHyperEdgeId(), edge->getHyperEdgeId(), 0, "Name?");
         }
         if (lineItem)
         {
