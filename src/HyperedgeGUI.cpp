@@ -1,10 +1,11 @@
 #include "HyperedgeGUI.hpp"
 #include "ui_HyperedgeGUI.h"
 
-//#include "HyperedgeViewer.hpp"
+#include "HyperedgeViewer.hpp"
 #include "ConceptgraphViewer.hpp"
 #include "HyperedgeControl.hpp"
 #include <QDockWidget>
+#include <QTabWidget>
 #include <QFileDialog>
 #include <QTextStream>
 #include "Hyperedge.hpp"
@@ -15,8 +16,13 @@ HyperedgeGUI::HyperedgeGUI(QWidget *parent)
     mpUi = new Ui::HyperedgeGUI();
     mpUi->setupUi(this);
 
-    mpViewer = new ConceptgraphViewer();
-    setCentralWidget(mpViewer);
+    QTabWidget *allViewers = new QTabWidget(this);
+    setCentralWidget(allViewers);
+
+    mpHedgeViewer = new HyperedgeViewer();
+    allViewers->addTab(mpHedgeViewer, "Hypergraph");
+    mpConceptViewer = new ConceptgraphViewer();
+    allViewers->addTab(mpConceptViewer, "Conceptgraph");
 
     QDockWidget *dockWidget = new QDockWidget(NULL, this);
     dockWidget->setAllowedAreas(Qt::LeftDockWidgetArea |
@@ -34,7 +40,10 @@ HyperedgeGUI::HyperedgeGUI(QWidget *parent)
     connect(mpControl, SIGNAL(storeHyperedgeSystem()), this, SLOT(storeHyperedgeSystemRequest()));
 
     // Connect viewer
-    connect(mpViewer, SIGNAL(YAMLStringReady(const QString&)), this, SLOT(onYAMLStringReady(const QString&)));
+    connect(mpConceptViewer, SIGNAL(YAMLStringReady(const QString&)), this, SLOT(onYAMLStringReady(const QString&)));
+    connect(mpHedgeViewer, SIGNAL(YAMLStringReady(const QString&)), this, SLOT(onYAMLStringReady(const QString&)));
+
+    // TODO: The viewers have to be synchronized. If one changes the underlying graph the other has to reload that one.
 }
 
 HyperedgeGUI::~HyperedgeGUI()
@@ -44,7 +53,8 @@ HyperedgeGUI::~HyperedgeGUI()
 
 void HyperedgeGUI::clearHyperedgeSystemRequest()
 {
-    mpViewer->clearConceptgraphSystem();
+    mpConceptViewer->clearConceptgraphSystem();
+    mpHedgeViewer->clearHyperedgeSystem();
 }
 
 void HyperedgeGUI::loadHyperedgeSystemRequest()
@@ -60,7 +70,7 @@ void HyperedgeGUI::loadHyperedgeSystemRequest()
     auto fileName = QFileDialog::getOpenFileName(this,
         tr("Open Hyperedge YAML"), lastDir, tr("YAML Files (*.yml *.yaml)"));
 
-    // ... if everything is ok, pass request to mpViewer
+    // ... if everything is ok, pass request to mpConceptViewer
     if (fileName != "")
     {   
         // Qt way
@@ -72,7 +82,8 @@ void HyperedgeGUI::loadHyperedgeSystemRequest()
             QString yamlString = fin.readAll();
             file.close();
             lastOpenedFile = fileName;
-            mpViewer->loadFromYAML(yamlString);
+            mpConceptViewer->loadFromYAML(yamlString);
+            mpHedgeViewer->loadFromYAML(yamlString);
         } else {
             // Opening failed
         }    
@@ -90,11 +101,12 @@ void HyperedgeGUI::storeHyperedgeSystemRequest()
                                lastSavedFile,
                                tr("YAML Files (*.yml *.yaml)"));
 
-    // ... if everything is ok, pass request to mpViewer
+    // ... if everything is ok, pass request to the currently active viewer
     if (fileName != "")
     {   
         lastSavedFile = fileName;
-        mpViewer->storeToYAML();
+        // TODO: Store dependent on the currently active tab!!!
+        mpConceptViewer->storeToYAML();
     }
 }
 void HyperedgeGUI::onYAMLStringReady(const QString& yamlString)
