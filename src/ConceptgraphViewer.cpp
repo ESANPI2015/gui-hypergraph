@@ -1,5 +1,5 @@
 #include "ConceptgraphViewer.hpp"
-#include "ui_HyperedgeViewer.h"
+#include "ui_HypergraphViewer.h"
 #include "ConceptgraphItem.hpp"
 
 #include <QGraphicsScene>
@@ -517,7 +517,7 @@ void ConceptgraphEdit::setDefaultLabel(const QString& label)
 ConceptgraphViewer::ConceptgraphViewer(QWidget *parent)
     : QWidget(parent)
 {
-    mpUi = new Ui::HyperedgeViewer();
+    mpUi = new Ui::HypergraphViewer();
     mpUi->setupUi(this);
 
     mpScene = new ForceBasedConceptgraphScene();
