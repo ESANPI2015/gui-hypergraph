@@ -568,7 +568,7 @@ void ConceptgraphViewer::storeToYAML()
     }
 }
 
-void ConceptgraphViewer::clearConceptgraphSystem()
+void ConceptgraphViewer::clearConceptgraph()
 {
     if (mpScene->graph())
     {

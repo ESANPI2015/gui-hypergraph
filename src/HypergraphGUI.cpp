@@ -1,25 +1,25 @@
-#include "HyperedgeGUI.hpp"
-#include "ui_HyperedgeGUI.h"
+#include "HypergraphGUI.hpp"
+#include "ui_HypergraphGUI.h"
 
-#include "HyperedgeViewer.hpp"
+#include "HypergraphViewer.hpp"
 #include "ConceptgraphViewer.hpp"
-#include "HyperedgeControl.hpp"
+#include "HypergraphControl.hpp"
 #include <QDockWidget>
 #include <QTabWidget>
 #include <QFileDialog>
 #include <QTextStream>
 #include "Hyperedge.hpp"
 
-HyperedgeGUI::HyperedgeGUI(QWidget *parent)
+HypergraphGUI::HypergraphGUI(QWidget *parent)
     : QMainWindow(parent)
 {
-    mpUi = new Ui::HyperedgeGUI();
+    mpUi = new Ui::HypergraphGUI();
     mpUi->setupUi(this);
 
     QTabWidget *allViewers = new QTabWidget(this);
     setCentralWidget(allViewers);
 
-    mpHedgeViewer = new HyperedgeViewer();
+    mpHedgeViewer = new HypergraphViewer();
     allViewers->addTab(mpHedgeViewer, "Hypergraph");
     mpConceptViewer = new ConceptgraphViewer();
     allViewers->addTab(mpConceptViewer, "Conceptgraph");
@@ -27,7 +27,7 @@ HyperedgeGUI::HyperedgeGUI(QWidget *parent)
     QDockWidget *dockWidget = new QDockWidget(NULL, this);
     dockWidget->setAllowedAreas(Qt::LeftDockWidgetArea |
                                 Qt::RightDockWidgetArea);
-    mpControl = new HyperedgeControl();
+    mpControl = new HypergraphControl();
     dockWidget->setWidget(mpControl);
     addDockWidget(Qt::LeftDockWidgetArea, dockWidget);
 
@@ -35,9 +35,9 @@ HyperedgeGUI::HyperedgeGUI(QWidget *parent)
     lastSavedFile = "";
 
     // Connect control
-    connect(mpControl, SIGNAL(clearHyperedgeSystem()), this, SLOT(clearHyperedgeSystemRequest()));
-    connect(mpControl, SIGNAL(loadHyperedgeSystem()), this, SLOT(loadHyperedgeSystemRequest()));
-    connect(mpControl, SIGNAL(storeHyperedgeSystem()), this, SLOT(storeHyperedgeSystemRequest()));
+    connect(mpControl, SIGNAL(clearHypergraph()), this, SLOT(clearHypergraphRequest()));
+    connect(mpControl, SIGNAL(loadHypergraph()), this, SLOT(loadHypergraphRequest()));
+    connect(mpControl, SIGNAL(storeHypergraph()), this, SLOT(storeHypergraphRequest()));
 
     // Connect viewer
     connect(mpConceptViewer, SIGNAL(YAMLStringReady(const QString&)), this, SLOT(onYAMLStringReady(const QString&)));
@@ -46,18 +46,18 @@ HyperedgeGUI::HyperedgeGUI(QWidget *parent)
     // TODO: The viewers have to be synchronized. If one changes the underlying graph the other has to reload that one.
 }
 
-HyperedgeGUI::~HyperedgeGUI()
+HypergraphGUI::~HypergraphGUI()
 {
     delete mpUi;
 }
 
-void HyperedgeGUI::clearHyperedgeSystemRequest()
+void HypergraphGUI::clearHypergraphRequest()
 {
-    mpConceptViewer->clearConceptgraphSystem();
-    mpHedgeViewer->clearHyperedgeSystem();
+    mpConceptViewer->clearConceptgraph();
+    mpHedgeViewer->clearHypergraph();
 }
 
-void HyperedgeGUI::loadHyperedgeSystemRequest()
+void HypergraphGUI::loadHypergraphRequest()
 {
     // Give standard dir or last used dir
     QString lastDir = QDir::currentPath();
@@ -68,7 +68,7 @@ void HyperedgeGUI::loadHyperedgeSystemRequest()
 
     // Open a dialog
     auto fileName = QFileDialog::getOpenFileName(this,
-        tr("Open Hyperedge YAML"), lastDir, tr("YAML Files (*.yml *.yaml)"));
+        tr("Open Hypergraph YAML"), lastDir, tr("YAML Files (*.yml *.yaml)"));
 
     // ... if everything is ok, pass request to mpConceptViewer
     if (fileName != "")
@@ -90,14 +90,14 @@ void HyperedgeGUI::loadHyperedgeSystemRequest()
     }
 }
 
-void HyperedgeGUI::storeHyperedgeSystemRequest()
+void HypergraphGUI::storeHypergraphRequest()
 {
     // Handle lastSavedFile
     if (lastSavedFile.isEmpty())
         lastSavedFile = lastOpenedFile;
 
     // Open a dialog
-    auto fileName = QFileDialog::getSaveFileName(this, tr("Save Hyperedge YAML"),
+    auto fileName = QFileDialog::getSaveFileName(this, tr("Save Hypergraph YAML"),
                                lastSavedFile,
                                tr("YAML Files (*.yml *.yaml)"));
 
@@ -109,7 +109,7 @@ void HyperedgeGUI::storeHyperedgeSystemRequest()
         mpConceptViewer->storeToYAML();
     }
 }
-void HyperedgeGUI::onYAMLStringReady(const QString& yamlString)
+void HypergraphGUI::onYAMLStringReady(const QString& yamlString)
 {
     if (!lastSavedFile.isEmpty())
     {

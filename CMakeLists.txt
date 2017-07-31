@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 
-project(HyperedgeGUI)
+project(HypergraphGUI)
 
 include_directories(src)
 include_directories(include)
@@ -43,27 +43,27 @@ add_definitions(${${PROJECT_NAME}_PKGCONFIG_CFLAGS_OTHER} -ggdb -Wall -pedantic 
 
 set(SOURCES_gui
     src/main.cpp
-    src/HyperedgeGUI.cpp
-    src/HyperedgeViewer.cpp
+    src/HypergraphGUI.cpp
+    src/HypergraphViewer.cpp
     src/ConceptgraphViewer.cpp
-    src/HyperedgeControl.cpp
+    src/HypergraphControl.cpp
     src/HyperedgeItem.cpp
     src/ConceptgraphItem.cpp
     )
 set(QT_HEADERS_gui # header which should be processed by moc
-    include/HyperedgeGUI.hpp
-    include/HyperedgeViewer.hpp
+    include/HypergraphGUI.hpp
+    include/HypergraphViewer.hpp
     include/ConceptgraphViewer.hpp
-    include/HyperedgeControl.hpp
+    include/HypergraphControl.hpp
     )
 set(HEADERS_gui # normal cpp-headers, for installing
     include/HyperedgeItem.hpp
     include/ConceptgraphItem.hpp
     )
 set(FORMS_gui
-    forms/HyperedgeGUI.ui
-    forms/HyperedgeViewer.ui
-    forms/HyperedgeControl.ui
+    forms/HypergraphGUI.ui
+    forms/HypergraphViewer.ui
+    forms/HypergraphControl.ui
     )
 set(RESOURCES_gui
 #    widgets_plotter.qrc

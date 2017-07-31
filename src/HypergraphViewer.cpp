@@ -1,5 +1,5 @@
-#include "HyperedgeViewer.hpp"
-#include "ui_HyperedgeViewer.h"
+#include "HypergraphViewer.hpp"
+#include "ui_HypergraphViewer.h"
 #include "HyperedgeItem.hpp"
 
 #include <QGraphicsScene>
@@ -13,19 +13,19 @@
 #include <sstream>
 #include <iostream>
 
-HyperedgeScene::HyperedgeScene(QObject * parent)
+HypergraphScene::HypergraphScene(QObject * parent)
 : QGraphicsScene(parent)
 {
     currentGraph = new Hypergraph();
 }
 
-HyperedgeScene::~HyperedgeScene()
+HypergraphScene::~HypergraphScene()
 {
     if (currentGraph)
         delete currentGraph;
 }
 
-void HyperedgeScene::addItem(QGraphicsItem *item)
+void HypergraphScene::addItem(QGraphicsItem *item)
 {
     QGraphicsScene::addItem(item);
 
@@ -42,7 +42,7 @@ void HyperedgeScene::addItem(QGraphicsItem *item)
     }
 }
 
-void HyperedgeScene::removeItem(QGraphicsItem *item)
+void HypergraphScene::removeItem(QGraphicsItem *item)
 {
     // Emit signals
     HyperedgeItem *edge = dynamic_cast<HyperedgeItem*>(item);
@@ -54,7 +54,7 @@ void HyperedgeScene::removeItem(QGraphicsItem *item)
     QGraphicsScene::removeItem(item);
 }
 
-void HyperedgeScene::addEdge(const QString& label)
+void HypergraphScene::addEdge(const QString& label)
 {
     if (currentGraph)
     {
@@ -64,7 +64,7 @@ void HyperedgeScene::addEdge(const QString& label)
     }
 }
 
-void HyperedgeScene::addEdgeAndConnect(const unsigned int toId, const QString& label)
+void HypergraphScene::addEdgeAndConnect(const unsigned int toId, const QString& label)
 {
     // FIXME: This is now difficult. Do we want to add it to the from or the to set?
     if (currentGraph)
@@ -76,26 +76,26 @@ void HyperedgeScene::addEdgeAndConnect(const unsigned int toId, const QString& l
     }
 }
 
-void HyperedgeScene::removeEdge(const unsigned int id)
+void HypergraphScene::removeEdge(const unsigned int id)
 {
     if (currentGraph)
         currentGraph->destroy(id);
 }
 
-void HyperedgeScene::connectEdges(const unsigned int fromId, const unsigned int toId)
+void HypergraphScene::connectEdges(const unsigned int fromId, const unsigned int toId)
 {
     // FIXME: This is now difficult. Do we want to add it to the from or the to set?
     if (currentGraph)
         currentGraph->to(fromId, toId);
 }
 
-void HyperedgeScene::updateEdge(const unsigned int id, const QString& label)
+void HypergraphScene::updateEdge(const unsigned int id, const QString& label)
 {
     if (currentGraph)
         currentGraph->get(id)->updateLabel(label.toStdString());
 }
 
-void HyperedgeScene::visualize(Hypergraph* graph)
+void HypergraphScene::visualize(Hypergraph* graph)
 {
     // If new graph is given, ...
     if (graph)
@@ -229,7 +229,7 @@ void HyperedgeScene::visualize(Hypergraph* graph)
 }
 
 ForceBasedScene::ForceBasedScene(QObject * parent)
-: HyperedgeScene(parent)
+: HypergraphScene(parent)
 {
     mpTimer = new QTimer(this);
     connect(mpTimer, SIGNAL(timeout()), this, SLOT(visualize()));
@@ -265,7 +265,7 @@ void ForceBasedScene::setEquilibriumDistance(qreal distance)
 void ForceBasedScene::visualize(Hypergraph *graph)
 {
     // First reconstruct the scene
-    HyperedgeScene::visualize(graph);
+    HypergraphScene::visualize(graph);
 
     // This is similar to Graph Drawing by Force-directed  Placement THOMAS M. J. FRUCHTERMAN* AND EDWARD M. REINGOLD 
     qreal k = mEquilibriumDistance;
@@ -316,7 +316,7 @@ void ForceBasedScene::visualize(Hypergraph *graph)
     }
 }
 
-HyperedgeView::HyperedgeView(QWidget *parent)
+HypergraphView::HypergraphView(QWidget *parent)
 : QGraphicsView(parent)
 {
     setAcceptDrops(true);
@@ -324,7 +324,7 @@ HyperedgeView::HyperedgeView(QWidget *parent)
                        QPainter::SmoothPixmapTransform);
 }
 
-HyperedgeView::HyperedgeView ( HyperedgeScene * scene, QWidget * parent)
+HypergraphView::HypergraphView ( HypergraphScene * scene, QWidget * parent)
 : QGraphicsView(scene, parent)
 {
     setAcceptDrops(true);
@@ -332,12 +332,12 @@ HyperedgeView::HyperedgeView ( HyperedgeScene * scene, QWidget * parent)
                        QPainter::SmoothPixmapTransform);
 }
 
-void HyperedgeView::wheelEvent(QWheelEvent *event)
+void HypergraphView::wheelEvent(QWheelEvent *event)
 {
     scaleView(pow(2.0, -event->delta() / 240.0));
 }
 
-void HyperedgeView::scaleView(qreal scaleFactor)
+void HypergraphView::scaleView(qreal scaleFactor)
 {
     qreal factor = transform()
                        .scale(scaleFactor, scaleFactor)
@@ -350,7 +350,7 @@ void HyperedgeView::scaleView(qreal scaleFactor)
     scale(scaleFactor, scaleFactor);
 }
 
-void HyperedgeView::mouseReleaseEvent(QMouseEvent* event)
+void HypergraphView::mouseReleaseEvent(QMouseEvent* event)
 {
     // always try to reset drag mode, just to be sure
     if (dragMode() != QGraphicsView::NoDrag) {
@@ -360,7 +360,7 @@ void HyperedgeView::mouseReleaseEvent(QMouseEvent* event)
     QGraphicsView::mouseReleaseEvent(event);
 }
 
-void HyperedgeView::mousePressEvent(QMouseEvent* event)
+void HypergraphView::mousePressEvent(QMouseEvent* event)
 {
     QGraphicsItem *item = itemAt(event->pos());
     if (event->button() == Qt::LeftButton)
@@ -378,8 +378,8 @@ void HyperedgeView::mousePressEvent(QMouseEvent* event)
     QGraphicsView::mousePressEvent(event);
 }
 
-HyperedgeEdit::HyperedgeEdit(QWidget *parent)
-: HyperedgeView(parent)
+HypergraphEdit::HypergraphEdit(QWidget *parent)
+: HypergraphView(parent)
 {
     selectedItem = NULL;
     lineItem = NULL;
@@ -388,8 +388,8 @@ HyperedgeEdit::HyperedgeEdit(QWidget *parent)
     isEditLabelMode = false;
 }
 
-HyperedgeEdit::HyperedgeEdit(HyperedgeScene * scene, QWidget * parent)
-: HyperedgeView(scene, parent)
+HypergraphEdit::HypergraphEdit(HypergraphScene * scene, QWidget * parent)
+: HypergraphView(scene, parent)
 {
     selectedItem = NULL;
     lineItem = NULL;
@@ -398,7 +398,7 @@ HyperedgeEdit::HyperedgeEdit(HyperedgeScene * scene, QWidget * parent)
     isEditLabelMode = false;
 }
 
-void HyperedgeEdit::keyPressEvent(QKeyEvent * event)
+void HypergraphEdit::keyPressEvent(QKeyEvent * event)
 {
     if (event->key() == Qt::Key_Delete)
     {
@@ -439,7 +439,7 @@ void HyperedgeEdit::keyPressEvent(QKeyEvent * event)
     QGraphicsView::keyPressEvent(event);
 }
 
-void HyperedgeEdit::mousePressEvent(QMouseEvent* event)
+void HypergraphEdit::mousePressEvent(QMouseEvent* event)
 {
     QGraphicsItem *item = itemAt(event->pos());
     if (event->button() == Qt::LeftButton)
@@ -480,10 +480,10 @@ void HyperedgeEdit::mousePressEvent(QMouseEvent* event)
             sourceItem = edge;
         }
     }
-    HyperedgeView::mousePressEvent(event);
+    HypergraphView::mousePressEvent(event);
 }
 
-void HyperedgeEdit::mouseMoveEvent(QMouseEvent* event)
+void HypergraphEdit::mouseMoveEvent(QMouseEvent* event)
 {
     // When in DRAW_LINE mode, update temporary visual line
     if (isDrawLineMode)
@@ -494,7 +494,7 @@ void HyperedgeEdit::mouseMoveEvent(QMouseEvent* event)
     QGraphicsView::mouseMoveEvent(event);
 }
 
-void HyperedgeEdit::mouseReleaseEvent(QMouseEvent* event)
+void HypergraphEdit::mouseReleaseEvent(QMouseEvent* event)
 {
     QGraphicsItem *item = itemAt(event->pos());
     if ((event->button() == Qt::RightButton) && isDrawLineMode)
@@ -515,23 +515,23 @@ void HyperedgeEdit::mouseReleaseEvent(QMouseEvent* event)
         isDrawLineMode = false;
     }
 
-    HyperedgeView::mouseReleaseEvent(event);
+    HypergraphView::mouseReleaseEvent(event);
 }
 
-void HyperedgeEdit::setDefaultLabel(const QString& label)
+void HypergraphEdit::setDefaultLabel(const QString& label)
 {
     currentLabel = label;
     emit labelChanged(currentLabel);
 }
 
-HyperedgeViewer::HyperedgeViewer(QWidget *parent)
+HypergraphViewer::HypergraphViewer(QWidget *parent)
     : QWidget(parent)
 {
-    mpUi = new Ui::HyperedgeViewer();
+    mpUi = new Ui::HypergraphViewer();
     mpUi->setupUi(this);
 
     mpScene = new ForceBasedScene();
-    mpView = new HyperedgeEdit(mpScene);
+    mpView = new HypergraphEdit(mpScene);
     mpView->show();
     QVBoxLayout *layout = new QVBoxLayout();
     layout->addWidget(mpView);
@@ -541,28 +541,28 @@ HyperedgeViewer::HyperedgeViewer(QWidget *parent)
 
 }
 
-HyperedgeViewer::~HyperedgeViewer()
+HypergraphViewer::~HypergraphViewer()
 {
     delete mpView;
     delete mpScene;
     delete mpUi;
 }
 
-void HyperedgeViewer::loadFromYAMLFile(const QString& fileName)
+void HypergraphViewer::loadFromYAMLFile(const QString& fileName)
 {
     auto newGraph = YAML::LoadFile(fileName.toStdString()).as<Hypergraph*>(); // std::string >> YAML::Node >> Hypergraph*
     mpScene->visualize(newGraph);
     delete newGraph;
 }
 
-void HyperedgeViewer::loadFromYAML(const QString& yamlString)
+void HypergraphViewer::loadFromYAML(const QString& yamlString)
 {
     auto newGraph = YAML::Load(yamlString.toStdString()).as<Hypergraph*>();
     mpScene->visualize(newGraph);
     delete newGraph;
 }
 
-void HyperedgeViewer::storeToYAML()
+void HypergraphViewer::storeToYAML()
 {
     if (mpScene->graph())
     {
@@ -574,7 +574,7 @@ void HyperedgeViewer::storeToYAML()
     }
 }
 
-void HyperedgeViewer::clearHyperedgeSystem()
+void HypergraphViewer::clearHypergraph()
 {
     if (mpScene->graph())
     {

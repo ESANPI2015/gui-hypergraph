@@ -169,7 +169,7 @@ class ConceptgraphViewer : public QWidget
         // Store a conceptgraph (= hypergraph) to a YAML string
         void storeToYAML();
         // Clear everything
-        void clearConceptgraphSystem();
+        void clearConceptgraph();
 
     private:
         Ui::HyperedgeViewer*            mpUi;

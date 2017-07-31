@@ -4,7 +4,7 @@
 #include <QApplication>
 #include <QTime>
 
-#include "HyperedgeGUI.hpp"
+#include "HypergraphGUI.hpp"
 
 int main(int argc, char **argv)
 {
@@ -15,7 +15,7 @@ int main(int argc, char **argv)
     // ComponentEditorWidget
     qsrand(QTime(0,0,0).secsTo(QTime::currentTime()));
 
-    HyperedgeGUI w;
+    HypergraphGUI w;
     w.show();
 
     app.setApplicationName(w.windowTitle());
