@@ -42,8 +42,6 @@ HypergraphGUI::HypergraphGUI(QWidget *parent)
     // Connect viewer
     connect(mpConceptViewer, SIGNAL(YAMLStringReady(const QString&)), this, SLOT(onYAMLStringReady(const QString&)));
     connect(mpHedgeViewer, SIGNAL(YAMLStringReady(const QString&)), this, SLOT(onYAMLStringReady(const QString&)));
-
-    // TODO: The viewers have to be synchronized. If one changes the underlying graph the other has to reload that one.
 }
 
 HypergraphGUI::~HypergraphGUI()
@@ -53,8 +51,10 @@ HypergraphGUI::~HypergraphGUI()
 
 void HypergraphGUI::clearHypergraphRequest()
 {
-    mpConceptViewer->clearConceptgraph();
-    mpHedgeViewer->clearHypergraph();
+    if (mpConceptViewer->isVisible())
+        mpConceptViewer->clearConceptgraph();
+    if (mpHedgeViewer->isVisible())
+        mpHedgeViewer->clearHypergraph();
 }
 
 void HypergraphGUI::loadHypergraphRequest()
@@ -82,8 +82,10 @@ void HypergraphGUI::loadHypergraphRequest()
             QString yamlString = fin.readAll();
             file.close();
             lastOpenedFile = fileName;
-            mpConceptViewer->loadFromYAML(yamlString);
-            mpHedgeViewer->loadFromYAML(yamlString);
+            if (mpConceptViewer->isVisible())
+                mpConceptViewer->loadFromYAML(yamlString);
+            if (mpHedgeViewer->isVisible())
+                mpHedgeViewer->loadFromYAML(yamlString);
         } else {
             // Opening failed
         }    
@@ -105,8 +107,10 @@ void HypergraphGUI::storeHypergraphRequest()
     if (fileName != "")
     {   
         lastSavedFile = fileName;
-        // TODO: Store dependent on the currently active tab!!!
-        mpConceptViewer->storeToYAML();
+        if (mpConceptViewer->isVisible())
+            mpConceptViewer->storeToYAML();
+        if (mpHedgeViewer->isVisible())
+            mpHedgeViewer->storeToYAML();
     }
 }
 void HypergraphGUI::onYAMLStringReady(const QString& yamlString)
