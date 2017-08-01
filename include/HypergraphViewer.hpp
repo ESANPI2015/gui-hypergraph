@@ -172,6 +172,12 @@ class HypergraphViewer : public QWidget
         // Clear everything
         void clearHypergraph();
 
+    protected:
+        // Triggered when widget is about to get visible
+        void showEvent(QShowEvent *event);
+        // Triggered when widget is about to get hidden
+        void hideEvent(QHideEvent *event);
+
     private:
         Ui::HypergraphViewer* mpUi;
 

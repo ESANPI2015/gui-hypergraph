@@ -548,6 +548,18 @@ HypergraphViewer::~HypergraphViewer()
     delete mpUi;
 }
 
+void HypergraphViewer::showEvent(QShowEvent *event)
+{
+    // About to be shown
+    mpScene->setEnabled(true);
+}
+
+void HypergraphViewer::hideEvent(QHideEvent *event)
+{
+    // About to be hidden
+    mpScene->setEnabled(false);
+}
+
 void HypergraphViewer::loadFromYAMLFile(const QString& fileName)
 {
     auto newGraph = YAML::LoadFile(fileName.toStdString()).as<Hypergraph*>(); // std::string >> YAML::Node >> Hypergraph*
