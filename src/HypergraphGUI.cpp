@@ -16,13 +16,8 @@ HypergraphGUI::HypergraphGUI(QWidget *parent)
     mpUi = new Ui::HypergraphGUI();
     mpUi->setupUi(this);
 
-    QTabWidget *allViewers = new QTabWidget(this);
-    setCentralWidget(allViewers);
-
-    mpHedgeViewer = new HypergraphViewer();
-    allViewers->addTab(mpHedgeViewer, "Hypergraph");
-    mpConceptViewer = new ConceptgraphViewer();
-    allViewers->addTab(mpConceptViewer, "Conceptgraph");
+    mpViewerTabWidget = new QTabWidget(this);
+    setCentralWidget(mpViewerTabWidget);
 
     QDockWidget *dockWidget = new QDockWidget(NULL, this);
     dockWidget->setAllowedAreas(Qt::LeftDockWidgetArea |
@@ -38,10 +33,6 @@ HypergraphGUI::HypergraphGUI(QWidget *parent)
     connect(mpControl, SIGNAL(clearHypergraph()), this, SLOT(clearHypergraphRequest()));
     connect(mpControl, SIGNAL(loadHypergraph()), this, SLOT(loadHypergraphRequest()));
     connect(mpControl, SIGNAL(storeHypergraph()), this, SLOT(storeHypergraphRequest()));
-
-    // Connect viewer
-    connect(mpConceptViewer, SIGNAL(YAMLStringReady(const QString&)), this, SLOT(onYAMLStringReady(const QString&)));
-    connect(mpHedgeViewer, SIGNAL(YAMLStringReady(const QString&)), this, SLOT(onYAMLStringReady(const QString&)));
 }
 
 HypergraphGUI::~HypergraphGUI()
@@ -51,10 +42,11 @@ HypergraphGUI::~HypergraphGUI()
 
 void HypergraphGUI::clearHypergraphRequest()
 {
-    if (mpConceptViewer->isVisible())
-        mpConceptViewer->clearConceptgraph();
-    if (mpHedgeViewer->isVisible())
-        mpHedgeViewer->clearHypergraph();
+    // If there is a tab widget, destroy it
+    if (mpViewerTabWidget && (mpViewerTabWidget->currentIndex() > -1))
+    {
+        mpViewerTabWidget->removeTab(mpViewerTabWidget->currentIndex());
+    }
 }
 
 void HypergraphGUI::loadHypergraphRequest()
@@ -70,7 +62,7 @@ void HypergraphGUI::loadHypergraphRequest()
     auto fileName = QFileDialog::getOpenFileName(this,
         tr("Open Hypergraph YAML"), lastDir, tr("YAML Files (*.yml *.yaml)"));
 
-    // ... if everything is ok, pass request to mpConceptViewer
+    // ... if everything is ok, create a viewer
     if (fileName != "")
     {   
         // Qt way
@@ -82,10 +74,12 @@ void HypergraphGUI::loadHypergraphRequest()
             QString yamlString = fin.readAll();
             file.close();
             lastOpenedFile = fileName;
-            if (mpConceptViewer->isVisible())
-                mpConceptViewer->loadFromYAML(yamlString);
-            if (mpHedgeViewer->isVisible())
-                mpHedgeViewer->loadFromYAML(yamlString);
+            // TODO: Create a new tab. The question is if it should be a CONCEPTGRAPH or a HYPEREDGE VIEWER (check the UREDGES!)
+            // Or just ask the user :)
+            HypergraphViewer* mpHypergraphViewer = new HypergraphViewer();
+            mpViewerTabWidget->addTab(mpHypergraphViewer, "Hypergraph");
+            connect(mpHypergraphViewer, SIGNAL(YAMLStringReady(const QString&)), this, SLOT(onYAMLStringReady(const QString&)));
+            mpHypergraphViewer->loadFromYAML(yamlString);
         } else {
             // Opening failed
         }    
@@ -94,6 +88,9 @@ void HypergraphGUI::loadHypergraphRequest()
 
 void HypergraphGUI::storeHypergraphRequest()
 {
+    if (mpViewerTabWidget->currentIndex() < 0)
+        return;
+
     // Handle lastSavedFile
     if (lastSavedFile.isEmpty())
         lastSavedFile = lastOpenedFile;
@@ -107,10 +104,9 @@ void HypergraphGUI::storeHypergraphRequest()
     if (fileName != "")
     {   
         lastSavedFile = fileName;
-        if (mpConceptViewer->isVisible())
-            mpConceptViewer->storeToYAML();
-        if (mpHedgeViewer->isVisible())
-            mpHedgeViewer->storeToYAML();
+        // Call the currently visible viewer
+        HypergraphViewer* mpHypergraphViewer = dynamic_cast<HypergraphViewer*>(mpViewerTabWidget->currentWidget());
+        mpHypergraphViewer->storeToYAML();
     }
 }
 void HypergraphGUI::onYAMLStringReady(const QString& yamlString)

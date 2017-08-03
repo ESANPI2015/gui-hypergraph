@@ -270,9 +270,8 @@ void ForceBasedScene::visualize(Hypergraph *graph)
     // This is similar to Graph Drawing by Force-directed  Placement THOMAS M. J. FRUCHTERMAN* AND EDWARD M. REINGOLD 
     qreal k = mEquilibriumDistance;
     qreal k_sqr = k * k;
-
-    // Cycle through pairs of nodes
     QMap<HyperedgeItem*, QPointF> displacements;
+    // Calculate repelling part
     for (auto item : items())
     {
         auto edge = dynamic_cast<HyperedgeItem*>(item);
@@ -285,13 +284,22 @@ void ForceBasedScene::visualize(Hypergraph *graph)
 
             // Calculate vector (direction from other to me)
             QPointF delta = edge->pos() - other->pos();
-            qreal length_sqr = delta.x() * delta.x() + delta.y() * delta.y() + 1.; // cannot be zero
-            // Calculate repulsive forces
-            displacements[edge] += k_sqr / length_sqr * delta; // k^2/d
+            // Repell from any other vertex by inverse square force law (charged particles)
+            qreal length_sqr = delta.x() * delta.x() + delta.y() * delta.y();
+            if (length_sqr > 0.f)
+            {
+                displacements[edge] += k_sqr / length_sqr * delta; // k^2/d * vec(d) / d
+            }
         }
+        // Add gravity to the center
+        //qreal length_sqr = item->pos().x() * item->pos().x() + item->pos().y() * item->pos().y();
+        //if (length_sqr > 0.f)
+        //{
+        //    displacements[edge] -= 0.001 * item->pos() / qSqrt(length_sqr);
+        //}
     }
 
-    // Cycle through edges
+    // Calculate attractive forces
     for (auto item : items())
     {
         auto line = dynamic_cast<EdgeItem*>(item);
@@ -300,10 +308,14 @@ void ForceBasedScene::visualize(Hypergraph *graph)
         auto source = line->getSourceItem();
         auto target = line->getTargetItem();
         QPointF delta = source->pos() - target->pos();
-        qreal length = qSqrt(delta.x() * delta.x() + delta.y() * delta.y());
-        // Calculate attractive forces
-        displacements[source] -= length * delta / k; // d^2/k
-        displacements[target] += length * delta / k; // d^2/k
+        qreal length_sqr = delta.x() * delta.x() + delta.y() * delta.y();
+        if (length_sqr > 0.f)
+        {
+            qreal length = qSqrt(length_sqr);
+            // Calculate attractive forces
+            displacements[source] -= length * delta / k; // d^2/k * vec(d) / d
+            displacements[target] += length * delta / k; // d^2/k * vec(d) / d
+        }
     }
 
     // Update positions
@@ -312,7 +324,9 @@ void ForceBasedScene::visualize(Hypergraph *graph)
         auto edge = dynamic_cast<HyperedgeItem*>(item);
         if (!edge) continue;
 
-        edge->setPos(item->pos() + displacements[edge] / mEquilibriumDistance / 10);
+        displacements[edge] = displacements[edge] / 1000.; // damp displacement <-- THIS IS VERY SENSITIVE!!!!!!
+        QPointF newPos(item->pos() + displacements[edge]); // x = x + disp
+        item->setPos(newPos);
     }
 }
 

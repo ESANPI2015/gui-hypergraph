@@ -10,8 +10,7 @@ namespace Ui
 }
 
 // Forward declarations
-class HypergraphViewer;
-class ConceptgraphViewer;
+class QTabWidget;
 class HypergraphControl;
 
 class HypergraphGUI : public QMainWindow
@@ -31,10 +30,9 @@ class HypergraphGUI : public QMainWindow
     private:
         Ui::HypergraphGUI* mpUi;
 
-        // Add hyperedge viewer
-        HypergraphViewer*    mpHedgeViewer;
-        ConceptgraphViewer* mpConceptViewer;
-
+        // The tab widget holding all viewers
+        QTabWidget*     mpViewerTabWidget;
+        
         // Add hyperedge control
         HypergraphControl* mpControl;
         QString lastOpenedFile;
