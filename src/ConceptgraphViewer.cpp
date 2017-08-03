@@ -572,7 +572,12 @@ void ConceptgraphViewer::clearConceptgraph()
 {
     if (mpScene->graph())
     {
+        // Delete all concepts first
         auto edges = mpScene->graph()->find();
+        for (auto edgeId : edges)
+            mpScene->graph()->destroy(edgeId);
+        // If there are relations left (e.g. relations over relations), destroy them now
+        edges = mpScene->graph()->relations();
         for (auto edgeId : edges)
             mpScene->graph()->destroy(edgeId);
     }
