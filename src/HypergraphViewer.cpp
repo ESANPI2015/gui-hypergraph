@@ -22,7 +22,10 @@ HypergraphScene::HypergraphScene(QObject * parent)
 HypergraphScene::~HypergraphScene()
 {
     if (currentGraph)
+    {
         delete currentGraph;
+        currentGraph = NULL;
+    }
 }
 
 QList<HyperedgeItem*> HypergraphScene::selectedHyperedgeItems()

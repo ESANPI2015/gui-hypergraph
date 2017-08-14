@@ -60,7 +60,6 @@ class HypergraphScene : public QGraphicsScene
         void connectEdges(const unsigned int fromId, const unsigned int toId);
         void updateEdge(const unsigned int id, const QString& label);
 
-
     private:
         bool mEnabled;
         Hypergraph *currentGraph;
