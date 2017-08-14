@@ -39,6 +39,7 @@ class HypergraphScene : public QGraphicsScene
             return currentGraph;
         }
         bool isEnabled() { return mEnabled; }
+        QList<HyperedgeItem*> selectedHyperedgeItems();
 
     signals:
         // Signals emitted
@@ -143,9 +144,6 @@ class HypergraphEdit : public HypergraphView
         bool isDrawLineMode;
         HyperedgeItem* sourceItem;
         QGraphicsLineItem *lineItem;
-
-        // SELECT_OBJECT mode
-        HyperedgeItem* selectedItem;
 
         // ADD NEW mode
         bool isEditLabelMode;

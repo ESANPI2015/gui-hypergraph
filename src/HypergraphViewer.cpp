@@ -25,6 +25,20 @@ HypergraphScene::~HypergraphScene()
         delete currentGraph;
 }
 
+QList<HyperedgeItem*> HypergraphScene::selectedHyperedgeItems()
+{
+    // get all selected hyperedge items
+    QList<QGraphicsItem *> selItems = selectedItems();
+    QList<HyperedgeItem *> selHItems;
+    for (QGraphicsItem *item : selItems)
+    {
+        HyperedgeItem* hitem = dynamic_cast<HyperedgeItem*>(item);
+        if (hitem)
+            selHItems.append(hitem);
+    }
+    return selHItems;
+}
+
 void HypergraphScene::addItem(QGraphicsItem *item)
 {
     QGraphicsScene::addItem(item);
@@ -399,7 +413,6 @@ void HypergraphView::mousePressEvent(QMouseEvent* event)
 HypergraphEdit::HypergraphEdit(QWidget *parent)
 : HypergraphView(parent)
 {
-    selectedItem = NULL;
     lineItem = NULL;
     isDrawLineMode = false;
     currentLabel = "Name?";
@@ -409,7 +422,6 @@ HypergraphEdit::HypergraphEdit(QWidget *parent)
 HypergraphEdit::HypergraphEdit(HypergraphScene * scene, QWidget * parent)
 : HypergraphView(scene, parent)
 {
-    selectedItem = NULL;
     lineItem = NULL;
     isDrawLineMode = false;
     currentLabel = "Name?";
@@ -418,39 +430,33 @@ HypergraphEdit::HypergraphEdit(HypergraphScene * scene, QWidget * parent)
 
 void HypergraphEdit::keyPressEvent(QKeyEvent * event)
 {
+    QList<HyperedgeItem *> selHItems = scene()->selectedHyperedgeItems();
     if (event->key() == Qt::Key_Delete)
     {
-        if (selectedItem)
+        for (HyperedgeItem *hitem : selHItems)
         {
             // Delete edge from graph
-            scene()->removeEdge(selectedItem->getHyperEdgeId());
-            selectedItem = NULL;
+            scene()->removeEdge(hitem->getHyperEdgeId());
         }
     }
     else if (event->key() == Qt::Key_Insert)
     {
-        if (selectedItem)
+        scene()->addEdge(currentLabel);
+    }
+    else if (selHItems.size())
+    {
+        if (!isEditLabelMode)
         {
-            // Add an edge to the graph
-            scene()->addEdgeAndConnect(selectedItem->getHyperEdgeId(), currentLabel);
-        } else {
-            scene()->addEdge(currentLabel);
+            // Start label edit
+            isEditLabelMode = true;
+            currentLabel = "";
         }
-    }
-    else if (selectedItem && !isEditLabelMode)
-    {
-        // Start label edit
-        isEditLabelMode = true;
-        currentLabel = "";
-        currentLabel += event->text();
-        scene()->updateEdge(selectedItem->getHyperEdgeId(), currentLabel);
-        setDefaultLabel(currentLabel);
-    }
-    else if (selectedItem && isEditLabelMode)
-    {
         // Update current label
         currentLabel += event->text();
-        scene()->updateEdge(selectedItem->getHyperEdgeId(), currentLabel);
+        for (HyperedgeItem *hitem : selHItems)
+        {
+            scene()->updateEdge(hitem->getHyperEdgeId(), currentLabel);
+        }
         setDefaultLabel(currentLabel);
     }
 
@@ -463,19 +469,6 @@ void HypergraphEdit::mousePressEvent(QMouseEvent* event)
     if (event->button() == Qt::LeftButton)
     {
         isEditLabelMode = false;
-        if (item)
-        {
-            // Select only HyperedgeItems
-            HyperedgeItem *edge = dynamic_cast<HyperedgeItem*>(item);
-            if (edge)
-            {
-                selectedItem = edge;
-            } else {
-                selectedItem = NULL;
-            }
-        } else {
-            selectedItem = NULL;
-        }
     }
     else if (event->button() == Qt::RightButton)
     {
