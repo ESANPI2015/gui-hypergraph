@@ -16,7 +16,7 @@
 HypergraphScene::HypergraphScene(QObject * parent)
 : QGraphicsScene(parent)
 {
-    currentGraph = new Hypergraph();
+    currentGraph = NULL;
 }
 
 HypergraphScene::~HypergraphScene()
@@ -81,29 +81,19 @@ void HypergraphScene::addEdge(const QString& label)
     }
 }
 
-void HypergraphScene::addEdgeAndConnect(const unsigned int toId, const QString& label)
-{
-    // FIXME: This is now difficult. Do we want to add it to the from or the to set?
-    if (currentGraph)
-    {
-        // Find a nice available id for it
-        unsigned id = qHash(label);
-        while (!currentGraph->create(id, label.toStdString())) id++;
-        currentGraph->to(id, toId);
-    }
-}
-
 void HypergraphScene::removeEdge(const unsigned int id)
 {
     if (currentGraph)
         currentGraph->destroy(id);
 }
 
-void HypergraphScene::connectEdges(const unsigned int fromId, const unsigned int toId)
+void HypergraphScene::connectEdges(const unsigned int fromId, const unsigned int id, const unsigned int toId)
 {
-    // FIXME: This is now difficult. Do we want to add it to the from or the to set?
     if (currentGraph)
-        currentGraph->to(fromId, toId);
+    {
+        currentGraph->from(fromId, id);
+        currentGraph->to(id, toId);
+    }
 }
 
 void HypergraphScene::updateEdge(const unsigned int id, const QString& label)
@@ -114,6 +104,9 @@ void HypergraphScene::updateEdge(const unsigned int id, const QString& label)
 
 void HypergraphScene::visualize(Hypergraph* graph)
 {
+    if (!currentGraph)
+        return;
+
     // If new graph is given, ...
     if (graph)
     {
@@ -253,7 +246,7 @@ ForceBasedScene::ForceBasedScene(QObject * parent)
 : HypergraphScene(parent)
 {
     mpTimer = new QTimer(this);
-    connect(mpTimer, SIGNAL(timeout()), this, SLOT(visualize()));
+    connect(mpTimer, SIGNAL(timeout()), this, SLOT(updateLayout()));
     mpTimer->start(1000/25);
 
     mEquilibriumDistance = 100;
@@ -279,11 +272,8 @@ void ForceBasedScene::setEquilibriumDistance(qreal distance)
         mEquilibriumDistance = distance;
 }
 
-void ForceBasedScene::visualize(Hypergraph *graph)
+void ForceBasedScene::updateLayout()
 {
-    // First reconstruct the scene
-    HypergraphScene::visualize(graph);
-
     // Suppress visualisation if desired
     if (!isEnabled())
         return;
@@ -511,7 +501,8 @@ void HypergraphEdit::mouseReleaseEvent(QMouseEvent* event)
         if (edge)
         {
             // Add model edge
-            scene()->connectEdges(sourceItem->getHyperEdgeId(), edge->getHyperEdgeId());
+            //scene()->connectEdges(sourceItem->getHyperEdgeId(), edge->getHyperEdgeId());
+            // TODO: Connect via DIALOG or buttons
         }
         if (lineItem)
         {

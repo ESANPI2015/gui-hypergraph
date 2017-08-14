@@ -55,12 +55,11 @@ class HypergraphScene : public QGraphicsScene
 
         // Slots to modify the underlying hyperedge system
         void addEdge(const QString& label="");
-        void addEdgeAndConnect(const unsigned int toId, const QString& label="");
         void removeEdge(const unsigned int id);
-        void connectEdges(const unsigned int fromId, const unsigned int toId);
+        void connectEdges(const unsigned int fromId, const unsigned int id, const unsigned int toId);
         void updateEdge(const unsigned int id, const QString& label);
 
-    private:
+    protected:
         bool mEnabled;
         Hypergraph *currentGraph;
         QMap<unsigned int, HyperedgeItem*> currentItems;
@@ -76,8 +75,7 @@ class ForceBasedScene : public HypergraphScene
 
     public slots:
         // Cycles through all items of a scene and updates the positions of hyperedgeitems according to their neighbours
-        // Calls the base class visualizer as well
-        void visualize(Hypergraph* graph = NULL);
+        void updateLayout();
         void setEquilibriumDistance(qreal distance);
         // Enable visualization (and also Timer!)
         void setEnabled(bool enable);
