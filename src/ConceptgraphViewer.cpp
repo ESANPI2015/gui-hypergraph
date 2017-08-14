@@ -440,18 +440,11 @@ void ConceptgraphEdit::mousePressEvent(QMouseEvent* event)
             ConceptgraphItem *edge = dynamic_cast<ConceptgraphItem*>(item);
             if (edge)
             {
-                if (selectedItem)
-                    selectedItem->setHighlight(false);
                 selectedItem = edge;
-                selectedItem->setHighlight(true);
             } else {
-                if (selectedItem)
-                    selectedItem->setHighlight(false);
                 selectedItem = NULL;
             }
         } else {
-            if (selectedItem)
-                selectedItem->setHighlight(false);
             selectedItem = NULL;
         }
     }

@@ -469,18 +469,11 @@ void HypergraphEdit::mousePressEvent(QMouseEvent* event)
             HyperedgeItem *edge = dynamic_cast<HyperedgeItem*>(item);
             if (edge)
             {
-                if (selectedItem)
-                    selectedItem->setHighlight(false);
                 selectedItem = edge;
-                selectedItem->setHighlight(true);
             } else {
-                if (selectedItem)
-                    selectedItem->setHighlight(false);
                 selectedItem = NULL;
             }
         } else {
-            if (selectedItem)
-                selectedItem->setHighlight(false);
             selectedItem = NULL;
         }
     }

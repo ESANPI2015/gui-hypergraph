@@ -13,6 +13,7 @@ HyperedgeItem::HyperedgeItem(const unsigned int id, const QString& l)
     mLabelWidth = 20;
     highlighted = false;
     setFlag(ItemIsMovable);
+    setFlag(ItemIsSelectable);
     setFlag(ItemSendsScenePositionChanges);
     setVisible(true);
     setZValue(1);
@@ -26,6 +27,7 @@ HyperedgeItem::HyperedgeItem(Hyperedge *edge)
     mLabelWidth = 20;
     highlighted = false;
     setFlag(ItemIsMovable);
+    setFlag(ItemIsSelectable);
     setFlag(ItemSendsScenePositionChanges);
     setVisible(true);
     setZValue(1);
@@ -41,16 +43,16 @@ void HyperedgeItem::setLabel(const QString& l)
     label = l;
 }
 
-void HyperedgeItem::setHighlight(bool choice)
-{
-    prepareGeometryChange();
-    highlighted = choice;
-}
+//void HyperedgeItem::setHighlight(bool choice)
+//{
+//    prepareGeometryChange();
+//    highlighted = choice;
+//}
 
-bool HyperedgeItem::isHighlighted()
-{
-    return highlighted;
-}
+//bool HyperedgeItem::isHighlighted()
+//{
+//    return highlighted;
+//}
 
 void HyperedgeItem::updateEdgeItems()
 {
@@ -106,7 +108,7 @@ void HyperedgeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
     mLabelWidth = qMax(fm.width(label), 20);
     mLabelHeight = qMax(fm.height(), 10);
 
-    if (highlighted)
+    if (isSelected())
         painter->setBrush(Qt::yellow);
     else
         painter->setBrush(Qt::white);
