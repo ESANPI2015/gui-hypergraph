@@ -31,10 +31,6 @@ class HyperedgeItem : public QGraphicsItem
         // Tell all registered edge items to update themselves!!!
         void updateEdgeItems();
 
-        // Set to true if item shall be highlighted
-        //void setHighlight(bool choice);
-        //bool isHighlighted();
-
         // Change the label
         void setLabel(const QString& l);
 
