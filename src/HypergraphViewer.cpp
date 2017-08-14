@@ -107,6 +107,10 @@ void HypergraphScene::visualize(Hypergraph* graph)
         currentGraph = mergedGraph;
     }
 
+    // Suppress visualisation if desired
+    if (!isEnabled())
+        return;
+
     // Now get all edges of the graph
     auto allEdges = currentGraph->find();
 
@@ -243,17 +247,13 @@ ForceBasedScene::~ForceBasedScene()
     delete mpTimer;
 }
 
-bool ForceBasedScene::isEnabled()
-{
-    return mpTimer->isActive();
-}
-
 void ForceBasedScene::setEnabled(bool enable)
 {
     if (enable && !isEnabled())
         mpTimer->start();
     else if (!enable)
         mpTimer->stop();
+    HypergraphScene::setEnabled(enable);
 }
 
 void ForceBasedScene::setEquilibriumDistance(qreal distance)
@@ -266,6 +266,10 @@ void ForceBasedScene::visualize(Hypergraph *graph)
 {
     // First reconstruct the scene
     HypergraphScene::visualize(graph);
+
+    // Suppress visualisation if desired
+    if (!isEnabled())
+        return;
 
     // This is similar to Graph Drawing by Force-directed  Placement THOMAS M. J. FRUCHTERMAN* AND EDWARD M. REINGOLD 
     qreal k = mEquilibriumDistance;
@@ -292,11 +296,11 @@ void ForceBasedScene::visualize(Hypergraph *graph)
             }
         }
         // Add gravity to the center
-        //qreal length_sqr = item->pos().x() * item->pos().x() + item->pos().y() * item->pos().y();
-        //if (length_sqr > 0.f)
-        //{
-        //    displacements[edge] -= 0.001 * item->pos() / qSqrt(length_sqr);
-        //}
+        qreal length_sqr = item->pos().x() * item->pos().x() + item->pos().y() * item->pos().y();
+        if (length_sqr > 0.f)
+        {
+            displacements[edge] -= 0.001 * item->pos() / qSqrt(length_sqr);
+        }
     }
 
     // Calculate attractive forces

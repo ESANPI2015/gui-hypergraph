@@ -38,6 +38,7 @@ class HypergraphScene : public QGraphicsScene
         {
             return currentGraph;
         }
+        bool isEnabled() { return mEnabled; }
 
     signals:
         // Signals emitted
@@ -48,6 +49,8 @@ class HypergraphScene : public QGraphicsScene
     public slots:
         // This is the constructing function of the hyperedge scene
         void visualize(Hypergraph* graph = NULL);
+        // Enable visualization
+        void setEnabled(bool enable) { mEnabled = enable; }
 
         // Slots to modify the underlying hyperedge system
         void addEdge(const QString& label="");
@@ -56,7 +59,9 @@ class HypergraphScene : public QGraphicsScene
         void connectEdges(const unsigned int fromId, const unsigned int toId);
         void updateEdge(const unsigned int id, const QString& label);
 
+
     private:
+        bool mEnabled;
         Hypergraph *currentGraph;
         QMap<unsigned int, HyperedgeItem*> currentItems;
 };
@@ -69,15 +74,13 @@ class ForceBasedScene : public HypergraphScene
         ForceBasedScene(QObject * parent = 0);
         ~ForceBasedScene();
 
-        // Adjust these if needed
-        bool isEnabled();
-
     public slots:
         // Cycles through all items of a scene and updates the positions of hyperedgeitems according to their neighbours
         // Calls the base class visualizer as well
         void visualize(Hypergraph* graph = NULL);
-        void setEnabled(bool enable);
         void setEquilibriumDistance(qreal distance);
+        // Enable visualization (and also Timer!)
+        void setEnabled(bool enable);
 
     private:
         QTimer *mpTimer;
