@@ -80,7 +80,7 @@ class ForceBasedScene : public HypergraphScene
         // Enable visualization (and also Timer!)
         void setEnabled(bool enable);
 
-    private:
+    protected:
         QTimer *mpTimer;
         qreal mEquilibriumDistance;
 };
@@ -136,7 +136,6 @@ class HypergraphEdit : public HypergraphView
         // b) insert edges (Ins)
         void keyPressEvent(QKeyEvent * event);
 
-    private:
         // DRAW_LINE mode
         bool isDrawLineMode;
         HyperedgeItem* sourceItem;
@@ -176,7 +175,6 @@ class HypergraphViewer : public QWidget
         // Triggered when widget is about to get hidden
         void hideEvent(QHideEvent *event);
 
-    private:
         Ui::HypergraphViewer* mpUi;
 
         ForceBasedScene*    mpScene;
