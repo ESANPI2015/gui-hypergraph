@@ -314,7 +314,7 @@ void ForceBasedScene::updateLayout()
         auto edge = dynamic_cast<HyperedgeItem*>(item);
         if (!edge) continue;
         allHyperedgeItems.append(edge);
-        displacements[edge] = QPointF(0.f,0.f);
+        displacements[edge] = QPointF(0.,0.);
     }
 
     // Different approach: select one item at random and calculate only its local gradient!
@@ -330,7 +330,7 @@ void ForceBasedScene::updateLayout()
             continue;
         QPointF delta = selectedEdge->pos() - other->pos(); // points towards selectedEdge
         qreal length_sqr = delta.x() * delta.x() + delta.y() * delta.y();
-        if ((length_sqr > 0.f) && (length_sqr < mEquilibriumDistance_sqr * 10.f))
+        if (length_sqr > 0.)
         {
             displacements[selectedEdge] += delta * mEquilibriumDistance_sqr / length_sqr; // k^2/d * delta/d
         }
@@ -346,10 +346,9 @@ void ForceBasedScene::updateLayout()
         QPointF delta = source->pos() - target->pos();
         qreal length_sqr = delta.x() * delta.x() + delta.y() * delta.y();
         // Calculate only if length_sqr is greater than equilibrium distance
-        if ((length_sqr > 0.f) && (length_sqr - mEquilibriumDistance_sqr > mEquilibriumDistance_sqr))
+        if (length_sqr > 0.)
         {
             qreal length = qSqrt(length_sqr);
-            // Move nodes a little bit closer
             displacements[source] -= length  * delta / mEquilibriumDistance; // d^2/k * delta/d
             displacements[target] += length  * delta / mEquilibriumDistance;
         }
