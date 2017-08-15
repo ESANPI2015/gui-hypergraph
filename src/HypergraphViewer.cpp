@@ -289,13 +289,22 @@ void ForceBasedScene::updateLayout()
     qreal k = mEquilibriumDistance;
     qreal k_sqr = k * k;
     QMap<HyperedgeItem*, QPointF> displacements;
+    QList<QGraphicsItem*> allItems = items();
+    QList<QGraphicsItem*> excludedItems = selectedItems();
+
+    // Remove all selected items from allItems
+    for (auto item : excludedItems)
+    {
+        allItems.removeAll(item);
+    }
+
     // Calculate repelling part
-    for (auto item : items())
+    for (auto item : allItems)
     {
         auto edge = dynamic_cast<HyperedgeItem*>(item);
         if (!edge) continue;
         displacements[edge] = QPointF(0,0);
-        for (auto otherItem : items())
+        for (auto otherItem : allItems)
         {
             auto other = dynamic_cast<HyperedgeItem*>(otherItem);
             if (!other || (other == edge)) continue;
@@ -318,7 +327,7 @@ void ForceBasedScene::updateLayout()
     }
 
     // Calculate attractive forces
-    for (auto item : items())
+    for (auto item : allItems)
     {
         auto line = dynamic_cast<EdgeItem*>(item);
         if (!line) continue;
@@ -337,7 +346,7 @@ void ForceBasedScene::updateLayout()
     }
 
     // Update positions
-    for (auto item : items())
+    for (auto item : allItems)
     {
         auto edge = dynamic_cast<HyperedgeItem*>(item);
         if (!edge) continue;
