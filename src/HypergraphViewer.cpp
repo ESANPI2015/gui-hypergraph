@@ -279,7 +279,7 @@ void ForceBasedScene::setLayoutEnabled(bool enable)
 
 void ForceBasedScene::setEnabled(bool enable)
 {
-    setLayoutEnabled(enable);
+    //setLayoutEnabled(enable);
     HypergraphScene::setEnabled(enable);
 }
 
@@ -314,6 +314,7 @@ void ForceBasedScene::updateLayout()
         auto edge = dynamic_cast<HyperedgeItem*>(item);
         if (!edge) continue;
         displacements[edge] = QPointF(0,0);
+        //unsigned considered = 0;
         for (auto otherItem : allItems)
         {
             auto other = dynamic_cast<HyperedgeItem*>(otherItem);
@@ -323,10 +324,17 @@ void ForceBasedScene::updateLayout()
             QPointF delta = edge->pos() - other->pos();
             // Repell from any other vertex by inverse square force law (charged particles)
             qreal length_sqr = delta.x() * delta.x() + delta.y() * delta.y();
+            // If node is very far, skip!
+            if (length_sqr > 1000000.f)
+                continue;
             if (length_sqr > 0.f)
             {
                 displacements[edge] += k_sqr / length_sqr * delta; // k^2/d * vec(d) / d
             }
+            // If more than 100 other nodes have been considered, skip!
+            //considered++;
+            //if (considered > 100)
+            //    break;
         }
         // Add gravity to the center
         qreal length_sqr = item->pos().x() * item->pos().x() + item->pos().y() * item->pos().y();
