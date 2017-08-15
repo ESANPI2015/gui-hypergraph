@@ -128,7 +128,7 @@ void ConceptgraphScene::visualize(Conceptgraph* graph)
     auto allConcepts = this->graph()->find();
     auto allRelations = this->graph()->relations();
     int N = allConcepts.size() + allRelations.size();
-    int dim = N * 10;
+    int dim = N * mEquilibriumDistance / 2;
 
     // Then we go through all edges and check if we already have an ConceptgraphItem or not
     QMap<unsigned int,ConceptgraphItem*> validItems;
