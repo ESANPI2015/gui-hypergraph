@@ -251,11 +251,11 @@ void HypergraphScene::visualize(Hypergraph* graph)
 ForceBasedScene::ForceBasedScene(QObject * parent)
 : HypergraphScene(parent)
 {
+    mEquilibriumDistance = 100;
     mpTimer = new QTimer(this);
     connect(mpTimer, SIGNAL(timeout()), this, SLOT(updateLayout()));
     mpTimer->start(1000/25);
-
-    mEquilibriumDistance = 100;
+    setLayoutEnabled(false);
 }
 
 ForceBasedScene::~ForceBasedScene()
