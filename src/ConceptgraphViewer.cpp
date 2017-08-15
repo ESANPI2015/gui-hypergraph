@@ -127,6 +127,8 @@ void ConceptgraphScene::visualize(Conceptgraph* graph)
     // Now get all edges of the graph
     auto allConcepts = this->graph()->find();
     auto allRelations = this->graph()->relations();
+    int N = allConcepts.size() + allRelations.size();
+    int dim = N * 10;
 
     // Then we go through all edges and check if we already have an ConceptgraphItem or not
     QMap<unsigned int,ConceptgraphItem*> validItems;
@@ -137,7 +139,7 @@ void ConceptgraphScene::visualize(Conceptgraph* graph)
         if (!currentItems.contains(conceptId))
         {
             item = new ConceptgraphItem(this->graph()->get(conceptId), ConceptgraphItem::CONCEPT);
-            item->setPos(qrand() % 2000 - 1000, qrand() % 2000 - 1000);
+            item->setPos(qrand() % dim - dim/2, qrand() % dim - dim/2);
             addItem(item);
             currentItems[conceptId] = item;
         } else {
@@ -152,7 +154,7 @@ void ConceptgraphScene::visualize(Conceptgraph* graph)
         if (!currentItems.contains(relId))
         {
             item = new ConceptgraphItem(this->graph()->get(relId), ConceptgraphItem::RELATION);
-            item->setPos(qrand() % 2000 - 1000, qrand() % 2000 - 1000);
+            item->setPos(qrand() % dim - dim/2, qrand() % dim - dim/2);
             addItem(item);
             currentItems[relId] = item;
         } else {
