@@ -45,7 +45,6 @@ class HyperedgeItem : public QGraphicsItem
 
         unsigned int edgeId;
         QString label;
-        bool highlighted;
 
         int mLabelWidth;
         int mLabelHeight;

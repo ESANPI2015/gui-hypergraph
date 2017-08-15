@@ -27,7 +27,7 @@ void ConceptgraphItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *
     mLabelWidth = qMax(fm.width(label), 20);
     mLabelHeight = qMax(fm.height(), 10);
 
-    if (highlighted)
+    if (isSelected())
         painter->setBrush(Qt::yellow);
     else
         painter->setBrush(Qt::white);

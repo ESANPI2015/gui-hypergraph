@@ -11,7 +11,6 @@ HyperedgeItem::HyperedgeItem(const unsigned int id, const QString& l)
 {
     mLabelHeight = 10;
     mLabelWidth = 20;
-    highlighted = false;
     setFlag(ItemIsMovable);
     setFlag(ItemIsSelectable);
     setFlag(ItemSendsScenePositionChanges);
@@ -25,7 +24,6 @@ HyperedgeItem::HyperedgeItem(Hyperedge *edge)
 {
     mLabelHeight = 10;
     mLabelWidth = 20;
-    highlighted = false;
     setFlag(ItemIsMovable);
     setFlag(ItemIsSelectable);
     setFlag(ItemSendsScenePositionChanges);
