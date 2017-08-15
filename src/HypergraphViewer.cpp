@@ -296,8 +296,7 @@ void ForceBasedScene::updateLayout()
         return;
 
     // This is similar to Graph Drawing by Force-directed  Placement THOMAS M. J. FRUCHTERMAN* AND EDWARD M. REINGOLD 
-    qreal k = mEquilibriumDistance;
-    qreal k_sqr = k * k;
+    qreal mEquilibriumDistance_sqr = mEquilibriumDistance * mEquilibriumDistance;
     QMap<HyperedgeItem*, QPointF> displacements;
     QList<QGraphicsItem*> allItems = items();
     QList<QGraphicsItem*> excludedItems = selectedItems();
@@ -308,67 +307,64 @@ void ForceBasedScene::updateLayout()
         allItems.removeAll(item);
     }
 
-    // Calculate repelling part
+    // Zeroing displacements & filter hyperedgeitems
+    QList<HyperedgeItem*> allHyperedgeItems;
     for (auto item : allItems)
     {
         auto edge = dynamic_cast<HyperedgeItem*>(item);
         if (!edge) continue;
-        displacements[edge] = QPointF(0,0);
-        for (auto otherItem : allItems)
-        {
-            auto other = dynamic_cast<HyperedgeItem*>(otherItem);
-            if (!other || (other == edge)) continue;
+        allHyperedgeItems.append(edge);
+        displacements[edge] = QPointF(0.f,0.f);
+    }
 
-            // Calculate vector (direction from other to me)
-            QPointF delta = edge->pos() - other->pos();
-            // Repell from any other vertex by inverse square force law (charged particles)
-            qreal length_sqr = delta.x() * delta.x() + delta.y() * delta.y();
-            // If node is very far, skip!
-            if (length_sqr > 1000000.f)
-                continue;
-            // Calculate only if length_sqr is greater than one!
-            if (length_sqr > 1.f)
-            {
-                displacements[edge] += k_sqr / length_sqr * delta; // k^2/d * vec(d) / d
-            }
-        }
-        // Add gravity to the center
-        qreal length_sqr = item->pos().x() * item->pos().x() + item->pos().y() * item->pos().y();
-        if (length_sqr > 0.f)
+    // Different approach: select one item at random and calculate only its local gradient!
+    const unsigned int N = allHyperedgeItems.size();
+    if (N < 2) return;
+    HyperedgeItem* selectedEdge = allHyperedgeItems.at(qrand() % N); // Probability 1/N
+    
+    // For selected edge:
+    // a) calculate all repelling forces to other nodes
+    for (auto other : allHyperedgeItems)
+    {
+        if (other == selectedEdge)
+            continue;
+        QPointF delta = selectedEdge->pos() - other->pos(); // points towards selectedEdge
+        qreal length_sqr = delta.x() * delta.x() + delta.y() * delta.y();
+        if ((length_sqr > 0.f) && (length_sqr < mEquilibriumDistance_sqr * 10.f))
         {
-            displacements[edge] -= 0.001 * item->pos() / qSqrt(length_sqr);
+            displacements[selectedEdge] += delta * mEquilibriumDistance_sqr / length_sqr; // k^2/d * delta/d
         }
     }
 
-    // Calculate attractive forces
-    for (auto item : allItems)
+    // b) find all EdgeItems and calc attraction forces
+    QSet<EdgeItem*> edgeItems = selectedEdge->getEdgeItems();
+    for (auto line : edgeItems)
     {
-        auto line = dynamic_cast<EdgeItem*>(item);
-        if (!line) continue;
-        
+        // Calculate attraction between connected nodes
         auto source = line->getSourceItem();
         auto target = line->getTargetItem();
         QPointF delta = source->pos() - target->pos();
         qreal length_sqr = delta.x() * delta.x() + delta.y() * delta.y();
-        // Calculate only if length_sqr is greater than one!
-        if (length_sqr > 1.f)
+        // Calculate only if length_sqr is greater than equilibrium distance
+        if ((length_sqr > 0.f) && (length_sqr - mEquilibriumDistance_sqr > mEquilibriumDistance_sqr))
         {
             qreal length = qSqrt(length_sqr);
-            // Calculate attractive forces
-            displacements[source] -= length * delta / k; // d^2/k * vec(d) / d
-            displacements[target] += length * delta / k; // d^2/k * vec(d) / d
+            // Move nodes a little bit closer
+            displacements[source] -= length  * delta / mEquilibriumDistance; // d^2/k * delta/d
+            displacements[target] += length  * delta / mEquilibriumDistance;
         }
     }
 
     // Update positions
-    for (auto item : allItems)
+    for (auto edge : allHyperedgeItems)
     {
-        auto edge = dynamic_cast<HyperedgeItem*>(item);
-        if (!edge) continue;
-
-        displacements[edge] = displacements[edge] / 1000.; // damp displacement <-- THIS IS VERY SENSITIVE!!!!!!
-        QPointF newPos(item->pos() + displacements[edge]); // x = x + disp
-        item->setPos(newPos);
+        // Check for bad values
+        if (std::isnan(displacements[edge].x()) || std::isnan(displacements[edge].y()))
+            continue;
+        if (std::isinf(displacements[edge].x()) || std::isinf(displacements[edge].y()))
+            continue;
+        QPointF newPos(edge->pos() + displacements[edge] / N / 10.f); // x = x + disp
+        edge->setPos(newPos);
     }
 }
 
