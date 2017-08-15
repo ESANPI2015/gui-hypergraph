@@ -282,6 +282,15 @@ void ConceptgraphEditor::keyPressEvent(QKeyEvent * event)
     {
         scene()->addConcept(0, "Name?");
     }
+    else if (event->key() == Qt::Key_Pause)
+    {
+        // Toggle force based layout on or off
+        ForceBasedScene *fbscene = dynamic_cast<ForceBasedScene*>(scene());
+        if (fbscene)
+        {
+            fbscene->setLayoutEnabled(!fbscene->isLayoutEnabled());
+        }
+    }
     else if (selection.size())
     {
         if (!isEditLabelMode)

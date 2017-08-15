@@ -73,12 +73,16 @@ class ForceBasedScene : public HypergraphScene
         ForceBasedScene(QObject * parent = 0);
         ~ForceBasedScene();
 
+        bool isLayoutEnabled();
+
     public slots:
         // Cycles through all items of a scene and updates the positions of hyperedgeitems according to their neighbours
         void updateLayout();
         void setEquilibriumDistance(qreal distance);
         // Enable visualization (and also Timer!)
         void setEnabled(bool enable);
+        // Only enable/disable layouting
+        void setLayoutEnabled(bool enable);
 
     protected:
         QTimer *mpTimer;

@@ -264,12 +264,22 @@ ForceBasedScene::~ForceBasedScene()
     delete mpTimer;
 }
 
-void ForceBasedScene::setEnabled(bool enable)
+bool ForceBasedScene::isLayoutEnabled()
 {
-    if (enable && !isEnabled())
+    return mpTimer->isActive();
+}
+
+void ForceBasedScene::setLayoutEnabled(bool enable)
+{
+    if (enable && !isLayoutEnabled())
         mpTimer->start();
     else if (!enable)
         mpTimer->stop();
+}
+
+void ForceBasedScene::setEnabled(bool enable)
+{
+    setLayoutEnabled(enable);
     HypergraphScene::setEnabled(enable);
 }
 
@@ -452,6 +462,15 @@ void HypergraphEdit::keyPressEvent(QKeyEvent * event)
     {
         scene()->addEdge(currentLabel);
     }
+    else if (event->key() == Qt::Key_Pause)
+    {
+        // Toggle force based layout on or off
+        ForceBasedScene *fbscene = dynamic_cast<ForceBasedScene*>(scene());
+        if (fbscene)
+        {
+            fbscene->setLayoutEnabled(!fbscene->isLayoutEnabled());
+        }
+    }
     else if (selHItems.size())
     {
         if (!isEditLabelMode)
@@ -551,7 +570,7 @@ HypergraphViewer::HypergraphViewer(QWidget *parent)
     layout->addWidget(mpView);
     mpUi->View->setLayout(layout);
 
-    mpUi->usageLabel->setText("LMB: Select  RMB: Associate  WHEEL: Zoom  DEL: Delete  INS: Insert");
+    mpUi->usageLabel->setText("LMB: Select  RMB: Associate  WHEEL: Zoom  DEL: Delete  INS: Insert  PAUSE: Toggle Layouting");
 
 }
 
