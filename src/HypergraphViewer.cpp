@@ -314,7 +314,6 @@ void ForceBasedScene::updateLayout()
         auto edge = dynamic_cast<HyperedgeItem*>(item);
         if (!edge) continue;
         displacements[edge] = QPointF(0,0);
-        //unsigned considered = 0;
         for (auto otherItem : allItems)
         {
             auto other = dynamic_cast<HyperedgeItem*>(otherItem);
@@ -327,14 +326,11 @@ void ForceBasedScene::updateLayout()
             // If node is very far, skip!
             if (length_sqr > 1000000.f)
                 continue;
-            if (length_sqr > 0.f)
+            // Calculate only if length_sqr is greater than one!
+            if (length_sqr > 1.f)
             {
                 displacements[edge] += k_sqr / length_sqr * delta; // k^2/d * vec(d) / d
             }
-            // If more than 100 other nodes have been considered, skip!
-            //considered++;
-            //if (considered > 100)
-            //    break;
         }
         // Add gravity to the center
         qreal length_sqr = item->pos().x() * item->pos().x() + item->pos().y() * item->pos().y();
@@ -354,7 +350,8 @@ void ForceBasedScene::updateLayout()
         auto target = line->getTargetItem();
         QPointF delta = source->pos() - target->pos();
         qreal length_sqr = delta.x() * delta.x() + delta.y() * delta.y();
-        if (length_sqr > 0.f)
+        // Calculate only if length_sqr is greater than one!
+        if (length_sqr > 1.f)
         {
             qreal length = qSqrt(length_sqr);
             // Calculate attractive forces
