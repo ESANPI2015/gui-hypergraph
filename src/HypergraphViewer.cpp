@@ -104,18 +104,24 @@ void HypergraphScene::updateEdge(const unsigned int id, const QString& label)
 
 void HypergraphScene::visualize(Hypergraph* graph)
 {
-    if (!currentGraph)
-        return;
-
     // If new graph is given, ...
     if (graph)
     {
-        // Merge graphs
-        auto mergedGraph = new Hypergraph(*currentGraph, *graph);
-        // destroy old one
-        delete currentGraph;
-        currentGraph = mergedGraph;
+        if (currentGraph)
+        {
+            // Merge graphs
+            auto mergedGraph = new Hypergraph(*currentGraph, *graph);
+            // destroy old one
+            delete currentGraph;
+            currentGraph = mergedGraph;
+        } else {
+            currentGraph = new Hypergraph(*graph);
+        }
     }
+
+    // If we dont have any graph ... skip
+    if (!currentGraph)
+        return;
 
     // Suppress visualisation if desired
     if (!isEnabled())
@@ -254,6 +260,7 @@ ForceBasedScene::ForceBasedScene(QObject * parent)
 
 ForceBasedScene::~ForceBasedScene()
 {
+    mpTimer->stop();
     delete mpTimer;
 }
 
