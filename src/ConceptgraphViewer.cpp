@@ -14,20 +14,31 @@
 #include <iostream>
 
 ConceptgraphScene::ConceptgraphScene(QObject * parent)
-: QGraphicsScene(parent)
+: ForceBasedScene(parent)
 {
-    currentGraph = new Conceptgraph();
 }
 
 ConceptgraphScene::~ConceptgraphScene()
 {
-    if (currentGraph)
-        delete currentGraph;
+}
+
+QList<ConceptgraphItem*> ConceptgraphScene::selectedConceptgraphItems()
+{
+    // get all selected hyperedge items
+    QList<QGraphicsItem *> selItems = selectedItems();
+    QList<ConceptgraphItem *> selHItems;
+    for (QGraphicsItem *item : selItems)
+    {
+        ConceptgraphItem* hitem = dynamic_cast<ConceptgraphItem*>(item);
+        if (hitem)
+            selHItems.append(hitem);
+    }
+    return selHItems;
 }
 
 void ConceptgraphScene::addItem(QGraphicsItem *item)
 {
-    QGraphicsScene::addItem(item);
+    ForceBasedScene::addItem(item);
 
     // Emit signals
     ConceptgraphItem *edge = dynamic_cast<ConceptgraphItem*>(item);
@@ -52,89 +63,111 @@ void ConceptgraphScene::removeItem(QGraphicsItem *item)
             emit relationRemoved(edge->getHyperEdgeId());
     }
 
-    QGraphicsScene::removeItem(item);
+    ForceBasedScene::removeItem(item);
 }
 
 void ConceptgraphScene::addConcept(const unsigned id, const QString& label)
 {
-    if (currentGraph)
+    Conceptgraph *g = graph();
+    if (g)
     {
         unsigned theId = id > 0 ? id : qHash(label);
-        while (!currentGraph->create(theId, label.toStdString())) theId++;
+        while (!g->create(theId, label.toStdString())) theId++;
+        visualize();
     }
 }
 
 void ConceptgraphScene::addRelation(const unsigned fromId, const unsigned toId, const unsigned id, const QString& label)
 {
-    if (currentGraph)
+    Conceptgraph *g = graph();
+    if (g)
     {
         unsigned theId = id > 0 ? id : qHash(label);
-        while (!currentGraph->relate(theId, fromId, toId, label.toStdString())) theId++;
+        while (!g->relate(theId, fromId, toId, label.toStdString())) theId++;
+        visualize();
     }
 }
 
-void ConceptgraphScene::removeEdge(const unsigned int id)
+void ConceptgraphScene::removeEdge(const unsigned id)
 {
-    if (currentGraph)
-        currentGraph->destroy(id);
-}
-
-void ConceptgraphScene::updateEdge(const unsigned int id, const QString& label)
-{
-    if (currentGraph)
-        currentGraph->get(id)->updateLabel(label.toStdString());
+    Conceptgraph *g = graph();
+    if (g)
+    {
+        g->destroy(id);
+        visualize();
+    }
 }
 
 void ConceptgraphScene::visualize(Conceptgraph* graph)
 {
-    // If new graph is given, ...
+    // If a new graph is given, ...
     if (graph)
     {
-        // Merge graphs
-        Hypergraph merged = Hypergraph(*currentGraph, *graph);
-        Conceptgraph* mergedGraph = new Conceptgraph(merged);
-        // destroy old one
-        delete currentGraph;
-        currentGraph = mergedGraph;
+        if (currentGraph)
+        {
+            // Merge graphs
+            Hypergraph merged = Hypergraph(*currentGraph, *graph);
+            Conceptgraph* mergedGraph = new Conceptgraph(merged);
+            // destroy old one
+            delete currentGraph;
+            currentGraph = mergedGraph;
+        } else {
+            currentGraph = new Conceptgraph(*graph);
+        }
     }
 
+    // If we dont have any graph ... skip
+    if (!this->graph())
+        return;
+
+    // Suppress visualisation if desired
+    if (!isEnabled())
+        return;
+
     // Now get all edges of the graph
-    auto allEdges = currentGraph->Hypergraph::find();
-    auto allConcepts = currentGraph->find();
+    auto allConcepts = this->graph()->find();
+    auto allRelations = this->graph()->relations();
 
     // Then we go through all edges and check if we already have an ConceptgraphItem or not
     QMap<unsigned int,ConceptgraphItem*> validItems;
-    for (auto edgeId : allEdges)
+    for (auto conceptId : allConcepts)
     {
-        auto x = currentGraph->get(edgeId);
-        if (!x)
-            continue;
-        // Skip id 1 and 2
-        if (x->id() == 1)
-            continue;
-        if (x->id() == 2)
-            continue;
         // Create or get item
         ConceptgraphItem *item;
-        if (!currentItems.contains(x->id()))
+        if (!currentItems.contains(conceptId))
         {
-            item = new ConceptgraphItem(x, allConcepts.count(x->id()) > 0 ? ConceptgraphItem::CONCEPT : ConceptgraphItem::RELATION);
+            item = new ConceptgraphItem(this->graph()->get(conceptId), ConceptgraphItem::CONCEPT);
             item->setPos(qrand() % 2000 - 1000, qrand() % 2000 - 1000);
             addItem(item);
-            currentItems[x->id()] = item;
+            currentItems[conceptId] = item;
         } else {
-            item = currentItems[x->id()];
+            item = dynamic_cast<ConceptgraphItem*>(currentItems[conceptId]);
         }
-        validItems[x->id()] = item;
+        validItems[conceptId] = item;
     }
-    
+    for (auto relId : allRelations)
+    {
+        // Create or get item
+        ConceptgraphItem *item;
+        if (!currentItems.contains(relId))
+        {
+            item = new ConceptgraphItem(this->graph()->get(relId), ConceptgraphItem::RELATION);
+            item->setPos(qrand() % 2000 - 1000, qrand() % 2000 - 1000);
+            addItem(item);
+            currentItems[relId] = item;
+        } else {
+            item = dynamic_cast<ConceptgraphItem*>(currentItems[relId]);
+        }
+        validItems[relId] = item;
+    }
+
     // Everything which is in validItem should be wired
     QMap<unsigned int,ConceptgraphItem*>::const_iterator it;
     for (it = validItems.begin(); it != validItems.end(); ++it)
     {
         auto edgeId = it.key();
         auto srcItem = it.value();
-        auto edge = currentGraph->get(edgeId);
+        auto edge = this->graph()->get(edgeId);
         // Make sure that item and edge share the same label
         srcItem->setLabel(QString::fromStdString(edge->label()));
         for (auto otherId : edge->pointingTo())
@@ -172,7 +205,7 @@ void ConceptgraphScene::visualize(Conceptgraph* graph)
             // Omit loops
             if (srcItem == destItem)
                 continue;
-            // Check if there is an edgeitem of type TO which points to destItem
+            // Check if there is an edgeitem of type FROM which points to destItem
             bool found = false;
             auto myEdgeItems = srcItem->getEdgeItems();
             for (auto line : myEdgeItems)
@@ -195,13 +228,14 @@ void ConceptgraphScene::visualize(Conceptgraph* graph)
 
     // Everything which is in currentItems but not in validItems has to be removed
     // First: remove edges
-    QMap<unsigned int,ConceptgraphItem*> toBeChecked(currentItems);
-    for (it = toBeChecked.begin(); it != toBeChecked.end(); ++it)
+    QMap<unsigned int,HyperedgeItem*> toBeChecked(currentItems); // NOTE: Since we modify currentItems, we should make a snapshot of the current state
+    QMap<unsigned int,HyperedgeItem*>::const_iterator it2;
+    for (it2 = toBeChecked.begin(); it2 != toBeChecked.end(); ++it2)
     {
-        auto id = it.key();
+        auto id = it2.key();
         if (validItems.contains(id))
             continue;
-        auto item = it.value();
+        auto item = it2.value();
         auto edgeSet = item->getEdgeItems();
         for (auto edge : edgeSet)
         {
@@ -212,247 +246,74 @@ void ConceptgraphScene::visualize(Conceptgraph* graph)
 
     // Everything which is in currentItems but not in validItems has to be removed
     // Second: remove items
-    for (it = toBeChecked.begin(); it != toBeChecked.end(); ++it)
+    for (it2 = toBeChecked.begin(); it2 != toBeChecked.end(); ++it2)
     {
-        auto id = it.key();
+        auto id = it2.key();
         if (validItems.contains(id))
             continue;
-        auto item = it.value();
+        auto item = it2.value();
         currentItems.remove(id);
         delete item;
     }
 }
 
-ForceBasedConceptgraphScene::ForceBasedConceptgraphScene(QObject * parent)
-: ConceptgraphScene(parent)
+ConceptgraphEditor::ConceptgraphEditor(QWidget *parent)
+: HypergraphEdit(parent)
 {
-    mpTimer = new QTimer(this);
-    connect(mpTimer, SIGNAL(timeout()), this, SLOT(visualize()));
-    mpTimer->start(1000/25);
-
-    mEquilibriumDistance = 100;
 }
 
-ForceBasedConceptgraphScene::~ForceBasedConceptgraphScene()
+ConceptgraphEditor::ConceptgraphEditor(ConceptgraphScene * scene, QWidget * parent)
+: HypergraphEdit(scene, parent)
 {
-    delete mpTimer;
 }
 
-bool ForceBasedConceptgraphScene::isEnabled()
+void ConceptgraphEditor::keyPressEvent(QKeyEvent * event)
 {
-    return mpTimer->isActive();
-}
-
-void ForceBasedConceptgraphScene::setEnabled(bool enable)
-{
-    if (enable && !isEnabled())
-        mpTimer->start();
-    else if (!enable)
-        mpTimer->stop();
-}
-
-void ForceBasedConceptgraphScene::setEquilibriumDistance(qreal distance)
-{
-    if (distance > 0)
-        mEquilibriumDistance = distance;
-}
-
-void ForceBasedConceptgraphScene::visualize(Conceptgraph *graph)
-{
-    // First reconstruct the scene
-    ConceptgraphScene::visualize(graph);
-
-    // This is similar to Graph Drawing by Force-directed  Placement THOMAS M. J. FRUCHTERMAN* AND EDWARD M. REINGOLD 
-    qreal k = mEquilibriumDistance;
-    qreal k_sqr = k * k;
-
-    // Cycle through pairs of nodes
-    QMap<ConceptgraphItem*, QPointF> displacements;
-    for (auto item : items())
-    {
-        auto edge = dynamic_cast<ConceptgraphItem*>(item);
-        if (!edge) continue;
-        displacements[edge] = QPointF(0,0);
-        for (auto otherItem : items())
-        {
-            auto other = dynamic_cast<ConceptgraphItem*>(otherItem);
-            if (!other || (other == edge)) continue;
-
-            // Calculate vector (direction from other to me)
-            QPointF delta = edge->pos() - other->pos();
-            qreal length_sqr = delta.x() * delta.x() + delta.y() * delta.y() + 1.; // cannot be zero
-            // Calculate repulsive forces
-            displacements[edge] += k_sqr / length_sqr * delta; // k^2/d
-        }
-    }
-
-    // Cycle through edges
-    for (auto item : items())
-    {
-        auto line = dynamic_cast<EdgeItem*>(item);
-        if (!line) continue;
-        
-        ConceptgraphItem* source = dynamic_cast<ConceptgraphItem*>(line->getSourceItem());
-        ConceptgraphItem* target = dynamic_cast<ConceptgraphItem*>(line->getTargetItem());
-        QPointF delta = source->pos() - target->pos();
-        qreal length = qSqrt(delta.x() * delta.x() + delta.y() * delta.y());
-        // Calculate attractive forces
-        displacements[source] -= length * delta / k; // d^2/k
-        displacements[target] += length * delta / k; // d^2/k
-    }
-
-    // Update positions
-    for (auto item : items())
-    {
-        auto edge = dynamic_cast<ConceptgraphItem*>(item);
-        if (!edge) continue;
-
-        edge->setPos(item->pos() + displacements[edge] / mEquilibriumDistance / 10);
-    }
-}
-
-ConceptgraphView::ConceptgraphView(QWidget *parent)
-: QGraphicsView(parent)
-{
-    setAcceptDrops(true);
-    setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing |
-                       QPainter::SmoothPixmapTransform);
-}
-
-ConceptgraphView::ConceptgraphView ( ConceptgraphScene * scene, QWidget * parent)
-: QGraphicsView(scene, parent)
-{
-    setAcceptDrops(true);
-    setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing |
-                       QPainter::SmoothPixmapTransform);
-}
-
-void ConceptgraphView::wheelEvent(QWheelEvent *event)
-{
-    scaleView(pow(2.0, -event->delta() / 240.0));
-}
-
-void ConceptgraphView::scaleView(qreal scaleFactor)
-{
-    qreal factor = transform()
-                       .scale(scaleFactor, scaleFactor)
-                       .mapRect(QRectF(0, 0, 1, 1))
-                       .width();
-    if(factor < 0.07 || factor > 100)
-    {
-        return;
-    }
-    scale(scaleFactor, scaleFactor);
-}
-
-void ConceptgraphView::mouseReleaseEvent(QMouseEvent* event)
-{
-    // always try to reset drag mode, just to be sure
-    if (dragMode() != QGraphicsView::NoDrag) {
-        setDragMode(QGraphicsView::NoDrag);
-    }
-
-    QGraphicsView::mouseReleaseEvent(event);
-}
-
-void ConceptgraphView::mousePressEvent(QMouseEvent* event)
-{
-    QGraphicsItem *item = itemAt(event->pos());
-    if (event->button() == Qt::LeftButton)
-    {
-        // Panning mode
-        // enable panning by pressing+dragging the left mouse button if there is
-        // _no_ ConceptgraphItem under the cursor right now.
-        // else we have select item mode (if there is an item)
-        if (!item || !dynamic_cast<ConceptgraphItem*>(item))
-        {
-            setDragMode(QGraphicsView::ScrollHandDrag);
-        }
-    }
-
-    QGraphicsView::mousePressEvent(event);
-}
-
-ConceptgraphEdit::ConceptgraphEdit(QWidget *parent)
-: ConceptgraphView(parent)
-{
-    selectedItem = NULL;
-    lineItem = NULL;
-    isDrawLineMode = false;
-    currentLabel = "Name?";
-    isEditLabelMode = false;
-}
-
-ConceptgraphEdit::ConceptgraphEdit(ConceptgraphScene * scene, QWidget * parent)
-: ConceptgraphView(scene, parent)
-{
-    selectedItem = NULL;
-    lineItem = NULL;
-    isDrawLineMode = false;
-    currentLabel = "Name?";
-    isEditLabelMode = false;
-}
-
-void ConceptgraphEdit::keyPressEvent(QKeyEvent * event)
-{
+    QList<ConceptgraphItem *> selection = scene()->selectedConceptgraphItems();
     if (event->key() == Qt::Key_Delete)
     {
-        if (selectedItem)
+        for (ConceptgraphItem *item : selection)
         {
             // Delete edge from graph
-            scene()->removeEdge(selectedItem->getHyperEdgeId());
-            selectedItem = NULL;
+            scene()->removeEdge(item->getHyperEdgeId());
         }
     }
     else if (event->key() == Qt::Key_Insert)
     {
         scene()->addConcept(0, "Name?");
     }
-    else if (selectedItem && !isEditLabelMode)
+    else if (selection.size())
     {
-        // Start label edit
-        isEditLabelMode = true;
-        currentLabel = "";
-        currentLabel += event->text();
-        scene()->updateEdge(selectedItem->getHyperEdgeId(), currentLabel);
-        setDefaultLabel(currentLabel);
-    }
-    else if (selectedItem && isEditLabelMode)
-    {
+        if (!isEditLabelMode)
+        {
+            // Start label edit
+            isEditLabelMode = true;
+            currentLabel = "";
+        }
         // Update current label
         currentLabel += event->text();
-        scene()->updateEdge(selectedItem->getHyperEdgeId(), currentLabel);
+        for (ConceptgraphItem *item : selection)
+        {
+            scene()->updateEdge(item->getHyperEdgeId(), currentLabel);
+        }
         setDefaultLabel(currentLabel);
     }
 
     QGraphicsView::keyPressEvent(event);
 }
 
-void ConceptgraphEdit::mousePressEvent(QMouseEvent* event)
+void ConceptgraphEditor::mousePressEvent(QMouseEvent* event)
 {
     QGraphicsItem *item = itemAt(event->pos());
     if (event->button() == Qt::LeftButton)
     {
         isEditLabelMode = false;
-        if (item)
-        {
-            // Select only ConceptgraphItems
-            ConceptgraphItem *edge = dynamic_cast<ConceptgraphItem*>(item);
-            if (edge)
-            {
-                selectedItem = edge;
-            } else {
-                selectedItem = NULL;
-            }
-        } else {
-            selectedItem = NULL;
-        }
     }
     else if (event->button() == Qt::RightButton)
     {
-        // If pressed on a ConceptgraphItem of type CONCEPT we start drawing a line
+        // If pressed on a ConceptgraphItem we start drawing a line
         auto edge = dynamic_cast<ConceptgraphItem*>(item);
-        if (edge && (edge->getType() == ConceptgraphItem::CONCEPT))
+        if (edge)
         {
             lineItem = new QGraphicsLineItem();
             QPen pen(Qt::red);
@@ -462,31 +323,21 @@ void ConceptgraphEdit::mousePressEvent(QMouseEvent* event)
             sourceItem = edge;
         }
     }
-    ConceptgraphView::mousePressEvent(event);
+
+    HypergraphView::mousePressEvent(event);
 }
 
-void ConceptgraphEdit::mouseMoveEvent(QMouseEvent* event)
-{
-    // When in DRAW_LINE mode, update temporary visual line
-    if (isDrawLineMode)
-    {
-        lineItem->setLine(sourceItem->pos().x(), sourceItem->pos().y(), mapToScene(event->pos()).x(), mapToScene(event->pos()).y());
-    }
-
-    QGraphicsView::mouseMoveEvent(event);
-}
-
-void ConceptgraphEdit::mouseReleaseEvent(QMouseEvent* event)
+void ConceptgraphEditor::mouseReleaseEvent(QMouseEvent* event)
 {
     QGraphicsItem *item = itemAt(event->pos());
     if ((event->button() == Qt::RightButton) && isDrawLineMode)
     {
-        // Check if there is a ConceptgraphItem of type CONCEPT at current pos
+        // Check if there is a ConceptgraphItem at current pos
         auto edge = dynamic_cast<ConceptgraphItem*>(item);
-        if (edge && (edge->getType() == ConceptgraphItem::CONCEPT))
+        if (edge)
         {
             // Add model edge
-            std::cout << "Create relation\n";
+            //std::cout << "Create relation\n";
             scene()->addRelation(sourceItem->getHyperEdgeId(), edge->getHyperEdgeId(), 0, "Name?");
         }
         if (lineItem)
@@ -498,81 +349,53 @@ void ConceptgraphEdit::mouseReleaseEvent(QMouseEvent* event)
         isDrawLineMode = false;
     }
 
-    ConceptgraphView::mouseReleaseEvent(event);
+    HypergraphView::mouseReleaseEvent(event);
 }
 
-void ConceptgraphEdit::setDefaultLabel(const QString& label)
+ConceptgraphWidget::ConceptgraphWidget(QWidget *parent)
+: HypergraphViewer(parent)
 {
-    currentLabel = label;
-    emit labelChanged(currentLabel);
-}
+    // The base class constructor created a pair of (ForceBasedScene, HypergraphEdit) in (mpScene, mpView)
+    // We have to get rid of them and replace them by a pair of (ConceptgraphScene, ConceptgraphEditor)
+    ForceBasedScene *old = mpScene;
+    HypergraphEdit  *old2 = mpView;
 
-ConceptgraphViewer::ConceptgraphViewer(QWidget *parent)
-    : QWidget(parent)
-{
-    mpUi = new Ui::HypergraphViewer();
-    mpUi->setupUi(this);
-
-    mpScene = new ForceBasedConceptgraphScene();
-    mpView = new ConceptgraphEdit(mpScene);
+    mpConceptScene = new ConceptgraphScene();
+    mpConceptEditor = new ConceptgraphEditor(mpConceptScene);
+    mpScene = mpConceptScene;
+    mpView = mpConceptEditor;
     mpView->show();
-    QVBoxLayout *layout = new QVBoxLayout();
+    QLayout *layout = mpUi->View->layout();
+    if (layout)
+    {
+        delete layout;
+    }
+    layout = new QVBoxLayout();
     layout->addWidget(mpView);
     mpUi->View->setLayout(layout);
 
-    mpUi->usageLabel->setText("LMB: Select  RMB: Associate  WHEEL: Zoom  DEL: Delete  INS: Insert");
-
+    delete old2;
+    delete old;
 }
 
-ConceptgraphViewer::~ConceptgraphViewer()
+ConceptgraphWidget::~ConceptgraphWidget()
 {
-    delete mpView;
-    delete mpScene;
-    delete mpUi;
 }
 
-void ConceptgraphViewer::loadFromYAMLFile(const QString& fileName)
+void ConceptgraphWidget::loadFromYAMLFile(const QString& fileName)
 {
     Hypergraph* newGraph = YAML::LoadFile(fileName.toStdString()).as<Hypergraph*>(); // std::string >> YAML::Node >> Hypergraph* >> Conceptgraph
     Conceptgraph* newCGraph = new Conceptgraph(*newGraph);
-    mpScene->visualize(newCGraph);
+    mpConceptScene->visualize(newCGraph);
     delete newCGraph;
     delete newGraph;
 }
 
-void ConceptgraphViewer::loadFromYAML(const QString& yamlString)
+void ConceptgraphWidget::loadFromYAML(const QString& yamlString)
 {
     auto newGraph = YAML::Load(yamlString.toStdString()).as<Hypergraph*>();
     Conceptgraph* newCGraph = new Conceptgraph(*newGraph);
-    mpScene->visualize(newCGraph);
+    mpConceptScene->visualize(newCGraph);
     delete newCGraph;
     delete newGraph;
 }
-
-void ConceptgraphViewer::storeToYAML()
-{
-    if (mpScene->graph())
-    {
-        std::stringstream result;
-        YAML::Node node;
-        node = dynamic_cast<Hypergraph*>(mpScene->graph());
-        result << node;
-        emit YAMLStringReady(QString::fromStdString(result.str()));
-    }
-}
-
-void ConceptgraphViewer::clearConceptgraph()
-{
-    if (mpScene->graph())
-    {
-        // Delete all concepts first
-        auto edges = mpScene->graph()->find();
-        for (auto edgeId : edges)
-            mpScene->graph()->destroy(edgeId);
-        // If there are relations left (e.g. relations over relations), destroy them now
-        edges = mpScene->graph()->relations();
-        for (auto edgeId : edges)
-            mpScene->graph()->destroy(edgeId);
-    }
-}
-
