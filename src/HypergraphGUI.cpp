@@ -76,8 +76,10 @@ void HypergraphGUI::loadHypergraphRequest()
             lastOpenedFile = fileName;
             // TODO: Create a new tab. The question is if it should be a CONCEPTGRAPH or a HYPEREDGE VIEWER (check the UREDGES!)
             // Or just ask the user :)
-            HypergraphViewer* mpHypergraphViewer = new HypergraphViewer();
-            mpViewerTabWidget->addTab(mpHypergraphViewer, "Hypergraph");
+            //HypergraphViewer* mpHypergraphViewer = new HypergraphViewer();
+            ConceptgraphWidget* mpHypergraphViewer = new ConceptgraphWidget();
+            //mpViewerTabWidget->addTab(mpHypergraphViewer, "Hypergraph");
+            mpViewerTabWidget->addTab(mpHypergraphViewer, "Conceptgraph");
             connect(mpHypergraphViewer, SIGNAL(YAMLStringReady(const QString&)), this, SLOT(onYAMLStringReady(const QString&)));
             mpHypergraphViewer->loadFromYAML(yamlString);
         } else {
