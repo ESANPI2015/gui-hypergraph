@@ -33,6 +33,7 @@ class ConceptgraphScene : public ForceBasedScene
         void addConcept(const unsigned id, const QString& label);
         void addRelation(const unsigned fromId, const unsigned toId, const unsigned id, const QString& label);
         void removeEdge(const unsigned id);
+        void updateEdge(const unsigned int id, const QString& label);
 };
 
 class ConceptgraphEditor : public HypergraphEdit

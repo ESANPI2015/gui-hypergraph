@@ -78,13 +78,17 @@ void HypergraphScene::addEdge(const QString& label)
         // Find a nice available id for it
         unsigned id = qHash(label);
         while (!currentGraph->create(id, label.toStdString())) id++;
+        visualize();
     }
 }
 
 void HypergraphScene::removeEdge(const unsigned int id)
 {
     if (currentGraph)
+    {
         currentGraph->destroy(id);
+        visualize();
+    }
 }
 
 void HypergraphScene::connectEdges(const unsigned int fromId, const unsigned int id, const unsigned int toId)
@@ -93,13 +97,17 @@ void HypergraphScene::connectEdges(const unsigned int fromId, const unsigned int
     {
         currentGraph->from(fromId, id);
         currentGraph->to(id, toId);
+        visualize();
     }
 }
 
 void HypergraphScene::updateEdge(const unsigned int id, const QString& label)
 {
     if (currentGraph)
+    {
         currentGraph->get(id)->updateLabel(label.toStdString());
+        visualize();
+    }
 }
 
 void HypergraphScene::visualize(Hypergraph* graph)

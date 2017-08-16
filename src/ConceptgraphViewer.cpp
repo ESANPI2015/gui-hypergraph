@@ -98,6 +98,16 @@ void ConceptgraphScene::removeEdge(const unsigned id)
     }
 }
 
+void ConceptgraphScene::updateEdge(const unsigned int id, const QString& label)
+{
+    Conceptgraph *g = graph();
+    if (g)
+    {
+        g->get(id)->updateLabel(label.toStdString());
+        visualize();
+    }
+}
+
 void ConceptgraphScene::visualize(Conceptgraph* graph)
 {
     // If a new graph is given, ...
