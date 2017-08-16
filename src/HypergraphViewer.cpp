@@ -594,7 +594,6 @@ HypergraphViewer::HypergraphViewer(QWidget *parent)
     mpUi->View->setLayout(layout);
 
     mpUi->usageLabel->setText("LMB: Select  RMB: Associate  WHEEL: Zoom  DEL: Delete  INS: Insert  PAUSE: Toggle Layouting");
-
 }
 
 HypergraphViewer::~HypergraphViewer()
@@ -608,6 +607,7 @@ void HypergraphViewer::showEvent(QShowEvent *event)
 {
     // About to be shown
     mpScene->setEnabled(true);
+    mpScene->visualize();
 }
 
 void HypergraphViewer::hideEvent(QHideEvent *event)
@@ -621,6 +621,8 @@ void HypergraphViewer::loadFromYAMLFile(const QString& fileName)
     auto newGraph = YAML::LoadFile(fileName.toStdString()).as<Hypergraph*>(); // std::string >> YAML::Node >> Hypergraph*
     mpScene->visualize(newGraph);
     delete newGraph;
+    // update stats
+    mpUi->statsLabel->setText("HE: " + QString::number(mpScene->graph()->find().size()));
 }
 
 void HypergraphViewer::loadFromYAML(const QString& yamlString)
@@ -628,6 +630,8 @@ void HypergraphViewer::loadFromYAML(const QString& yamlString)
     auto newGraph = YAML::Load(yamlString.toStdString()).as<Hypergraph*>();
     mpScene->visualize(newGraph);
     delete newGraph;
+    // update stats
+    mpUi->statsLabel->setText("HE: " + QString::number(mpScene->graph()->find().size()));
 }
 
 void HypergraphViewer::storeToYAML()
@@ -650,4 +654,11 @@ void HypergraphViewer::clearHypergraph()
         for (auto edgeId : edges)
             mpScene->graph()->destroy(edgeId);
     }
+    // update stats
+    mpUi->statsLabel->setText("HE: " + QString::number(mpScene->graph()->find().size()));
+}
+
+void HypergraphViewer::setEquilibriumDistance(qreal distance)
+{
+    mpScene->setEquilibriumDistance(distance);
 }

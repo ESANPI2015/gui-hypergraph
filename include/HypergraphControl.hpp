@@ -19,15 +19,21 @@ class HypergraphControl : public QWidget
 
     signals:
         // Signals emitted by Buttons or something else
+        void newHypergraph();
         void clearHypergraph();
         void loadHypergraph();
         void storeHypergraph();
+        void setEquilibriumDistance(qreal distance);
 
     public slots:
         // To be autoconnected
+        void on_newButton_clicked();
         void on_loadButton_clicked();
         void on_saveButton_clicked();
         void on_clearButton_clicked();
+
+        void on_equiSlider_valueChanged(int value);
+        void on_equiBox_valueChanged(int value);
 
     private:
         Ui::HypergraphControl *mpUi;

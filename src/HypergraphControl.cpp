@@ -26,3 +26,20 @@ void HypergraphControl::on_clearButton_clicked()
 {
     emit clearHypergraph();
 }
+
+void HypergraphControl::on_newButton_clicked()
+{
+    emit newHypergraph();
+}
+
+void HypergraphControl::on_equiSlider_valueChanged(int value)
+{
+    on_equiBox_valueChanged(value);
+}
+
+void HypergraphControl::on_equiBox_valueChanged(int value)
+{
+    mpUi->equiSlider->setValue(value);
+    mpUi->equiBox->setValue(value);
+    emit setEquilibriumDistance(1. * value);
+}

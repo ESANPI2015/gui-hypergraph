@@ -31,6 +31,7 @@ HypergraphGUI::HypergraphGUI(QWidget *parent)
 
     // Connect control
     connect(mpControl, SIGNAL(clearHypergraph()), this, SLOT(clearHypergraphRequest()));
+    connect(mpControl, SIGNAL(newHypergraph()), this, SLOT(newHypergraphRequest()));
     connect(mpControl, SIGNAL(loadHypergraph()), this, SLOT(loadHypergraphRequest()));
     connect(mpControl, SIGNAL(storeHypergraph()), this, SLOT(storeHypergraphRequest()));
 }
@@ -47,6 +48,15 @@ void HypergraphGUI::clearHypergraphRequest()
     {
         mpViewerTabWidget->removeTab(mpViewerTabWidget->currentIndex());
     }
+}
+
+void HypergraphGUI::newHypergraphRequest()
+{
+    ConceptgraphWidget* mpHypergraphViewer = new ConceptgraphWidget();
+    //mpViewerTabWidget->addTab(mpHypergraphViewer, "Hypergraph");
+    mpViewerTabWidget->addTab(mpHypergraphViewer, "Conceptgraph");
+    connect(mpHypergraphViewer, SIGNAL(YAMLStringReady(const QString&)), this, SLOT(onYAMLStringReady(const QString&)));
+    connect(mpControl, SIGNAL(setEquilibriumDistance(qreal)), mpHypergraphViewer, SLOT(setEquilibriumDistance(qreal)));
 }
 
 void HypergraphGUI::loadHypergraphRequest()
@@ -81,6 +91,7 @@ void HypergraphGUI::loadHypergraphRequest()
             //mpViewerTabWidget->addTab(mpHypergraphViewer, "Hypergraph");
             mpViewerTabWidget->addTab(mpHypergraphViewer, "Conceptgraph");
             connect(mpHypergraphViewer, SIGNAL(YAMLStringReady(const QString&)), this, SLOT(onYAMLStringReady(const QString&)));
+            connect(mpControl, SIGNAL(setEquilibriumDistance(qreal)), mpHypergraphViewer, SLOT(setEquilibriumDistance(qreal)));
             mpHypergraphViewer->loadFromYAML(yamlString);
         } else {
             // Opening failed

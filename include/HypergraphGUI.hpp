@@ -23,6 +23,7 @@ class HypergraphGUI : public QMainWindow
 
     public slots:
         void clearHypergraphRequest();
+        void newHypergraphRequest();
         void loadHypergraphRequest();
         void storeHypergraphRequest();
         void onYAMLStringReady(const QString& yamlString);

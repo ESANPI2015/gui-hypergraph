@@ -68,6 +68,9 @@ class ConceptgraphWidget : public HypergraphViewer
         void loadFromYAML(const QString& yamlString);
 
     protected:
+        // Triggered when widget is about to get visible
+        void showEvent(QShowEvent *event);
+
         ConceptgraphScene*       mpConceptScene;
         ConceptgraphEditor*      mpConceptEditor;
 };

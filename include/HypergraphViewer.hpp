@@ -172,6 +172,8 @@ class HypergraphViewer : public QWidget
         void storeToYAML();
         // Clear everything
         void clearHypergraph();
+        // Change the equilibrium distance for force based layout
+        void setEquilibriumDistance(qreal distance);
 
     protected:
         // Triggered when widget is about to get visible
