@@ -344,11 +344,14 @@ void ForceBasedScene::updateLayout()
             qreal length_sqr = delta.x() * delta.x() + delta.y() * delta.y();
 
             // Push away according to charge model
-            if ((length_sqr > 1e-9) && (length_sqr < mEquilibriumDistance_sqr * 1000.))
+            if (length_sqr > 1e-9)
             {
                 qreal length = qSqrt(length_sqr);
-                displacements[selectedEdge] +=  mEquilibriumDistance_sqr * delta / length_sqr / N; // ~ 1/d^2
-                displacements[other]        -=  mEquilibriumDistance_sqr * delta / length_sqr / N;
+                if (length < mEquilibriumDistance * 10.f)
+                {
+                    displacements[selectedEdge] +=  mEquilibriumDistance_sqr * delta / length_sqr / N; // ~ 1/d^2
+                    displacements[other]        -=  mEquilibriumDistance_sqr * delta / length_sqr / N;
+                }
             } 
         }
 
