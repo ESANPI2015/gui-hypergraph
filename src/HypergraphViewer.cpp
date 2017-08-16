@@ -324,42 +324,54 @@ void ForceBasedScene::updateLayout()
         allHyperedgeItems.append(edge);
         displacements[edge] = QPointF(0.,0.);
     }
+    const unsigned int N = allHyperedgeItems.size();
+
 
     // Different approach: select one item at random and calculate only its local gradient!
-    const unsigned int N = allHyperedgeItems.size();
-    if (N < 2) return;
-    HyperedgeItem* selectedEdge = allHyperedgeItems.at(qrand() % N); // Probability 1/N
-    
-    // For selected edge:
-    // a) calculate all repelling forces to other nodes
-    for (auto other : allHyperedgeItems)
-    {
-        if (other == selectedEdge)
-            continue;
-        QPointF delta = selectedEdge->pos() - other->pos(); // points towards selectedEdge
-        qreal length_sqr = delta.x() * delta.x() + delta.y() * delta.y();
-        if (length_sqr > 0.)
-        {
-            displacements[selectedEdge] += delta * mEquilibriumDistance_sqr / length_sqr; // k^2/d * delta/d
-        }
-    }
+    //if (N < 2) return;
+    //HyperedgeItem* selectedEdge = allHyperedgeItems.at(qrand() % N); // Probability 1/N
 
-    // b) find all EdgeItems and calc attraction forces
-    QSet<EdgeItem*> edgeItems = selectedEdge->getEdgeItems();
-    for (auto line : edgeItems)
+    // Global update
+    for (auto selectedEdge : allHyperedgeItems)
     {
-        // Calculate attraction between connected nodes
-        auto source = line->getSourceItem();
-        auto target = line->getTargetItem();
-        QPointF delta = source->pos() - target->pos();
-        qreal length_sqr = delta.x() * delta.x() + delta.y() * delta.y();
-        // Calculate only if length_sqr is greater than equilibrium distance
-        if (length_sqr > 0.)
+        // For selected edge:
+        // a) calculate all repelling forces to other nodes
+        for (auto other : allHyperedgeItems)
         {
-            qreal length = qSqrt(length_sqr);
-            displacements[source] -= length  * delta / mEquilibriumDistance; // d^2/k * delta/d
-            displacements[target] += length  * delta / mEquilibriumDistance;
+            if (other == selectedEdge)
+                continue;
+            QPointF delta(selectedEdge->pos() - other->pos()); // points towards selectedEdge
+            qreal length_sqr = delta.x() * delta.x() + delta.y() * delta.y();
+
+            // Push away according to charge model
+            if ((length_sqr > 1e-9) && (length_sqr < mEquilibriumDistance_sqr * 1000.))
+            {
+                qreal length = qSqrt(length_sqr);
+                displacements[selectedEdge] +=  mEquilibriumDistance_sqr * delta / length_sqr / N; // ~ 1/d^2
+                displacements[other]        -=  mEquilibriumDistance_sqr * delta / length_sqr / N;
+            } 
         }
+
+        // b) find all EdgeItems and calc attraction forces
+        QSet<EdgeItem*> edgeItems = selectedEdge->getEdgeItems();
+        for (auto line : edgeItems)
+        {
+            // Calculate attraction between connected nodes
+            auto source = line->getSourceItem();
+            auto target = line->getTargetItem();
+            QPointF delta(source->pos() - target->pos()); // points towards source
+            qreal length_sqr = delta.x() * delta.x() + delta.y() * delta.y();
+
+            // Pull accronding to a spring
+            if (length_sqr > 1e-9)
+            {
+                qreal length = qSqrt(length_sqr);
+                displacements[source] -=  (1. - mEquilibriumDistance / length) * delta / N; // ~ d
+                displacements[target] +=  (1. - mEquilibriumDistance / length) * delta / N;
+            } 
+        }
+
+    // Global update
     }
 
     // Update positions
@@ -370,7 +382,7 @@ void ForceBasedScene::updateLayout()
             continue;
         if (std::isinf(displacements[edge].x()) || std::isinf(displacements[edge].y()))
             continue;
-        QPointF newPos(edge->pos() + displacements[edge] / N / 10.f); // x = x + disp
+        QPointF newPos(edge->pos() + displacements[edge]); // x = x + disp
         edge->setPos(newPos);
     }
 }
