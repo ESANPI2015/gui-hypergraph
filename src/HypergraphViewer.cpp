@@ -317,19 +317,21 @@ void ForceBasedScene::updateLayout()
 
     // Zeroing displacements & filter hyperedgeitems
     QList<HyperedgeItem*> allHyperedgeItems;
+    QList<EdgeItem*> allEdgeItems;
     for (auto item : allItems)
     {
         auto edge = dynamic_cast<HyperedgeItem*>(item);
-        if (!edge) continue;
+        if (!edge) 
+        {
+            auto line = dynamic_cast<EdgeItem*>(item);
+            if (line)
+                allEdgeItems.append(line);
+            continue;
+        }
         allHyperedgeItems.append(edge);
         displacements[edge] = QPointF(0.,0.);
     }
     const unsigned int N = allHyperedgeItems.size();
-
-
-    // Different approach: select one item at random and calculate only its local gradient!
-    //if (N < 2) return;
-    //HyperedgeItem* selectedEdge = allHyperedgeItems.at(qrand() % N); // Probability 1/N
 
     // Global update
     for (auto selectedEdge : allHyperedgeItems)
@@ -344,37 +346,35 @@ void ForceBasedScene::updateLayout()
             qreal length_sqr = delta.x() * delta.x() + delta.y() * delta.y();
 
             // Push away according to charge model
+            // Actually, charges should be proportional to size
             if (length_sqr > 1e-9)
             {
                 qreal length = qSqrt(length_sqr);
                 if (length < mEquilibriumDistance * 10.f)
                 {
-                    displacements[selectedEdge] +=  mEquilibriumDistance_sqr * delta / length_sqr / N; // ~ 1/d^2
-                    displacements[other]        -=  mEquilibriumDistance_sqr * delta / length_sqr / N;
+                    displacements[selectedEdge] +=  mEquilibriumDistance_sqr * mEquilibriumDistance * delta / length / length_sqr / N; // ~ 1/d^2 * 1/N
                 }
             } 
         }
+    }
 
-        // b) find all EdgeItems and calc attraction forces
-        QSet<EdgeItem*> edgeItems = selectedEdge->getEdgeItems();
-        for (auto line : edgeItems)
+    // b) find all EdgeItems and calc attraction forces
+    for (auto line : allEdgeItems)
+    {
+        // Calculate attraction between connected nodes
+        auto source = line->getSourceItem();
+        auto target = line->getTargetItem();
+
+        QPointF delta(source->pos() - target->pos()); // points towards source
+        qreal length_sqr = delta.x() * delta.x() + delta.y() * delta.y();
+
+        // Pull according to a spring
+        if (length_sqr > 1e-9)
         {
-            // Calculate attraction between connected nodes
-            auto source = line->getSourceItem();
-            auto target = line->getTargetItem();
-            QPointF delta(source->pos() - target->pos()); // points towards source
-            qreal length_sqr = delta.x() * delta.x() + delta.y() * delta.y();
-
-            // Pull accronding to a spring
-            if (length_sqr > 1e-9)
-            {
-                qreal length = qSqrt(length_sqr);
-                displacements[source] -=  (1. - mEquilibriumDistance / length) * delta / N; // ~ d
-                displacements[target] +=  (1. - mEquilibriumDistance / length) * delta / N;
-            } 
-        }
-
-    // Global update
+            qreal length = qSqrt(length_sqr);
+            displacements[source] -=  (1. - mEquilibriumDistance / length) * delta / N; // ~ d/N
+            displacements[target] +=  (1. - mEquilibriumDistance / length) * delta / N;
+        } 
     }
 
     // Update positions
