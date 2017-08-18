@@ -39,6 +39,7 @@ class HypergraphScene : public QGraphicsScene
             return currentGraph;
         }
         bool isEnabled() { return mEnabled; }
+        virtual bool isLayoutEnabled() { return false; }
         QList<HyperedgeItem*> selectedHyperedgeItems();
 
     signals:
@@ -49,9 +50,13 @@ class HypergraphScene : public QGraphicsScene
 
     public slots:
         // This is the constructing function of the hyperedge scene
-        void visualize(Hypergraph* graph = NULL);
+        virtual void visualize(Hypergraph* graph = NULL);
         // Enable visualization
-        void setEnabled(bool enable) { mEnabled = enable; }
+        virtual void setEnabled(bool enable) { mEnabled = enable; }
+        // Enable layouting
+        virtual void setLayoutEnabled(bool enable) {}
+        virtual void updateLayout() {}
+        virtual void setEquilibriumDistance(qreal distance) {}
 
         // Slots to modify the underlying hyperedge system
         void addEdge(const QString& label="");
@@ -73,16 +78,16 @@ class ForceBasedScene : public HypergraphScene
         ForceBasedScene(QObject * parent = 0);
         ~ForceBasedScene();
 
-        bool isLayoutEnabled();
+        virtual bool isLayoutEnabled();
 
     public slots:
         // Cycles through all items of a scene and updates the positions of hyperedgeitems according to their neighbours
-        void updateLayout();
-        void setEquilibriumDistance(qreal distance);
+        virtual void updateLayout();
+        virtual void setEquilibriumDistance(qreal distance);
         // Enable visualization (and also Timer!)
-        void setEnabled(bool enable);
+        virtual void setEnabled(bool enable);
         // Only enable/disable layouting
-        void setLayoutEnabled(bool enable);
+        virtual void setLayoutEnabled(bool enable);
 
     protected:
         QTimer *mpTimer;
@@ -184,7 +189,7 @@ class HypergraphViewer : public QWidget
 
         Ui::HypergraphViewer* mpUi;
 
-        ForceBasedScene*    mpScene;
+        HypergraphScene*     mpScene;
         HypergraphEdit*      mpView;
 };
 

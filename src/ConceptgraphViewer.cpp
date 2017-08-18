@@ -383,7 +383,7 @@ ConceptgraphWidget::ConceptgraphWidget(QWidget *parent)
 {
     // The base class constructor created a pair of (ForceBasedScene, HypergraphEdit) in (mpScene, mpView)
     // We have to get rid of them and replace them by a pair of (ConceptgraphScene, ConceptgraphEditor)
-    ForceBasedScene *old = mpScene;
+    HypergraphScene *old = mpScene;
     HypergraphEdit  *old2 = mpView;
 
     mpConceptScene = new ConceptgraphScene();
