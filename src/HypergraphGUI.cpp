@@ -57,6 +57,8 @@ void HypergraphGUI::newHypergraphRequest()
     mpViewerTabWidget->addTab(mpHypergraphViewer, "Conceptgraph");
     connect(mpHypergraphViewer, SIGNAL(YAMLStringReady(const QString&)), this, SLOT(onYAMLStringReady(const QString&)));
     connect(mpControl, SIGNAL(setEquilibriumDistance(qreal)), mpHypergraphViewer, SLOT(setEquilibriumDistance(qreal)));
+    Conceptgraph empty;
+    mpHypergraphViewer->loadFromGraph(empty);
 }
 
 void HypergraphGUI::loadHypergraphRequest()

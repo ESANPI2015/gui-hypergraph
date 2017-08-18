@@ -621,22 +621,25 @@ void HypergraphViewer::hideEvent(QHideEvent *event)
     mpScene->setEnabled(false);
 }
 
+void HypergraphViewer::loadFromGraph(Hypergraph& graph)
+{
+    mpScene->visualize(&graph);
+    // update stats
+    mpUi->statsLabel->setText("HE: " + QString::number(mpScene->graph()->find().size()));
+}
+
 void HypergraphViewer::loadFromYAMLFile(const QString& fileName)
 {
     auto newGraph = YAML::LoadFile(fileName.toStdString()).as<Hypergraph*>(); // std::string >> YAML::Node >> Hypergraph*
-    mpScene->visualize(newGraph);
+    loadFromGraph(*newGraph);
     delete newGraph;
-    // update stats
-    mpUi->statsLabel->setText("HE: " + QString::number(mpScene->graph()->find().size()));
 }
 
 void HypergraphViewer::loadFromYAML(const QString& yamlString)
 {
     auto newGraph = YAML::Load(yamlString.toStdString()).as<Hypergraph*>();
-    mpScene->visualize(newGraph);
+    loadFromGraph(*newGraph);
     delete newGraph;
-    // update stats
-    mpUi->statsLabel->setText("HE: " + QString::number(mpScene->graph()->find().size()));
 }
 
 void HypergraphViewer::storeToYAML()

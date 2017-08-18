@@ -168,6 +168,7 @@ class HypergraphViewer : public QWidget
         void loadFromYAMLFile(const QString& fileName);
         // Load a hyperedge system (= hypergraph) from YAML string
         void loadFromYAML(const QString& yamlString);
+        void loadFromGraph(Hypergraph& graph);
         // Store a hyperedge system (= hypergraph) to a YAML string
         void storeToYAML();
         // Clear everything

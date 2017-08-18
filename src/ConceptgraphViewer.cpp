@@ -415,13 +415,9 @@ void ConceptgraphWidget::showEvent(QShowEvent *event)
     mpConceptScene->visualize();
 }
 
-void ConceptgraphWidget::loadFromYAMLFile(const QString& fileName)
+void ConceptgraphWidget::loadFromGraph(Conceptgraph& graph)
 {
-    Hypergraph* newGraph = YAML::LoadFile(fileName.toStdString()).as<Hypergraph*>(); // std::string >> YAML::Node >> Hypergraph* >> Conceptgraph
-    Conceptgraph* newCGraph = new Conceptgraph(*newGraph);
-    mpConceptScene->visualize(newCGraph);
-    delete newCGraph;
-    delete newGraph;
+    mpConceptScene->visualize(&graph);
     // update stats
     mpUi->statsLabel->setText(
                             "CONCEPTS: " + QString::number(mpConceptScene->graph()->find().size()) +
@@ -429,16 +425,20 @@ void ConceptgraphWidget::loadFromYAMLFile(const QString& fileName)
                              );
 }
 
+void ConceptgraphWidget::loadFromYAMLFile(const QString& fileName)
+{
+    Hypergraph* newGraph = YAML::LoadFile(fileName.toStdString()).as<Hypergraph*>(); // std::string >> YAML::Node >> Hypergraph* >> Conceptgraph
+    Conceptgraph* newCGraph = new Conceptgraph(*newGraph);
+    loadFromGraph(*newCGraph);
+    delete newCGraph;
+    delete newGraph;
+}
+
 void ConceptgraphWidget::loadFromYAML(const QString& yamlString)
 {
     auto newGraph = YAML::Load(yamlString.toStdString()).as<Hypergraph*>();
     Conceptgraph* newCGraph = new Conceptgraph(*newGraph);
-    mpConceptScene->visualize(newCGraph);
+    loadFromGraph(*newCGraph);
     delete newCGraph;
     delete newGraph;
-    // update stats
-    mpUi->statsLabel->setText(
-                            "CONCEPTS: " + QString::number(mpConceptScene->graph()->find().size()) +
-                            "  RELATIONS: " + QString::number(mpConceptScene->graph()->relations().size())
-                             );
 }
