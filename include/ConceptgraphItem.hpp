@@ -16,8 +16,6 @@ class ConceptgraphItem : public HyperedgeItem
         ConceptgraphItem(Hyperedge *x, ConceptgraphItemType type);
         virtual ~ConceptgraphItem();
 
-        QRectF boundingRect() const;
-
         void paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
                    QWidget *widget);
 

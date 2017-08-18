@@ -2,43 +2,35 @@
 #include <QWidget>
 #include <QPainter>
 #include <QColor>
+#include <QStyleOptionGraphicsItem>
 #include <QtCore>
 #include "Hyperedge.hpp"
 
-HyperedgeItem::HyperedgeItem(const unsigned int id, const QString& l)
-: edgeId(id),
-  label(l)
-{
-    mLabelHeight = 10;
-    mLabelWidth = 20;
-    setFlag(ItemIsMovable);
-    setFlag(ItemIsSelectable);
-    setFlag(ItemSendsScenePositionChanges);
-    setVisible(true);
-    setZValue(1);
-}
-
 HyperedgeItem::HyperedgeItem(Hyperedge *edge)
-: edgeId(edge->id()),
-  label(QString::fromStdString(edge->label()))
+: edgeId(edge->id())
 {
-    mLabelHeight = 10;
-    mLabelWidth = 20;
     setFlag(ItemIsMovable);
     setFlag(ItemIsSelectable);
     setFlag(ItemSendsScenePositionChanges);
     setVisible(true);
     setZValue(1);
+    setPlainText(QString::fromStdString(edge->label()));
 }
 
 HyperedgeItem::~HyperedgeItem()
 {
 }
 
+QPointF HyperedgeItem::centerPos()
+{
+    QPointF topLeft(pos());
+    QRectF  rect(boundingRect());
+    return (QPointF(topLeft.x() + rect.width()/2., topLeft.y() + rect.height()/2.));
+}
+
 void HyperedgeItem::setLabel(const QString& l)
 {
-    prepareGeometryChange();
-    label = l;
+    setPlainText(l);
 }
 
 void HyperedgeItem::updateEdgeItems()
@@ -79,28 +71,18 @@ QVariant HyperedgeItem::itemChange(GraphicsItemChange change,
             break;
         }
     };
-    return QGraphicsItem::itemChange(change, value);
-}
-
-QRectF HyperedgeItem::boundingRect() const
-{
-    return QRectF(-mLabelWidth/2-5-1, -mLabelHeight/2-5-1,
-                  mLabelWidth + 10 + 2, mLabelHeight + 10 + 2);
+    return QGraphicsTextItem::itemChange(change, value);
 }
 
 void HyperedgeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
            QWidget *widget)
 {
-    QFontMetrics fm(widget->fontMetrics());
-    mLabelWidth = qMax(fm.width(label), 20);
-    mLabelHeight = qMax(fm.height(), 10);
-
     if (isSelected())
         painter->setBrush(Qt::yellow);
     else
         painter->setBrush(Qt::white);
-    painter->drawRoundedRect(-mLabelWidth/2-5, -mLabelHeight/2-5, mLabelWidth+10, mLabelHeight+10, 5, 5);
-    painter->drawText(-mLabelWidth/2, mLabelHeight/2-3, label);
+    painter->drawRoundedRect(option->exposedRect, 5, 5);
+    QGraphicsTextItem::paint(painter, option, widget);
 }
 
 EdgeItem::EdgeItem(HyperedgeItem *from, HyperedgeItem *to, const Type type)
@@ -131,8 +113,8 @@ void EdgeItem::adjust()
 QRectF EdgeItem::boundingRect() const
 {
     // NOTE: Just using two points is not OK!
-    QPointF a(mpSourceEdge->pos());
-    QPointF b(mpTargetEdge->pos());
+    QPointF a(mpSourceEdge->centerPos());
+    QPointF b(mpTargetEdge->centerPos());
 
     float x = qMin(a.x(), b.x());
     float y = qMin(a.y(), b.y());
@@ -146,13 +128,13 @@ void EdgeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
            QWidget *widget)
 {
     // Get the length and the vector between source and target
-    QPointF delta(mpTargetEdge->pos() - mpSourceEdge->pos());
+    QPointF delta(mpTargetEdge->centerPos() - mpSourceEdge->centerPos());
     float len = qSqrt(delta.x() * delta.x() + delta.y() * delta.y() + 1);
 
     // Calculate the maximum radius at which a direction identifier should be placed
     QRectF targetRect(mpTargetEdge->boundingRect());
     float maxR = qSqrt(targetRect.width() * targetRect.width() + targetRect.height() * targetRect.height()) / 2;
-    QPointF circlePos(mpTargetEdge->pos() - delta / len * maxR);
+    QPointF circlePos(mpTargetEdge->centerPos() - delta / len * maxR);
     QRectF rect(circlePos.x()-5, circlePos.y()-5, 10, 10);
 
     // Decide how to draw circle
@@ -166,6 +148,6 @@ void EdgeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
     }
 
     // paint
-    painter->drawLine(mpSourceEdge->pos(), mpTargetEdge->pos());
+    painter->drawLine(mpSourceEdge->centerPos(), mpTargetEdge->centerPos());
     painter->drawEllipse(rect);
 }

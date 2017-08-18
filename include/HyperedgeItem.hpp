@@ -1,20 +1,18 @@
 #ifndef _HYPEREDGE_ITEM_HPP
 #define _HYPEREDGE_ITEM_HPP
 
-#include <QGraphicsItem>
+#include <QGraphicsTextItem>
 #include <QSet>
 
 class Hyperedge;
 class EdgeItem;
+class QGraphicsTextItem;
 
-class HyperedgeItem : public QGraphicsItem
+class HyperedgeItem : public QGraphicsTextItem
 {
     public:
         HyperedgeItem(Hyperedge* edge);
-        HyperedgeItem(const unsigned int id, const QString& l);
         virtual ~HyperedgeItem();
-
-        QRectF boundingRect() const;
 
         void paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
                    QWidget *widget);
@@ -39,15 +37,13 @@ class HyperedgeItem : public QGraphicsItem
             return mEdgeSet;
         }
 
+        QPointF centerPos();
+
     protected:
         /*Callback to inform others when the item changed position or size*/
         virtual QVariant itemChange(GraphicsItemChange change, const QVariant& value);
 
         unsigned int edgeId;
-        QString label;
-
-        int mLabelWidth;
-        int mLabelHeight;
         QSet<EdgeItem*> mEdgeSet;
 };
 

@@ -142,21 +142,6 @@ void ConceptgraphScene::visualize(Conceptgraph* graph)
 
     // Then we go through all edges and check if we already have an ConceptgraphItem or not
     QMap<unsigned int,ConceptgraphItem*> validItems;
-    for (auto conceptId : allConcepts)
-    {
-        // Create or get item
-        ConceptgraphItem *item;
-        if (!currentItems.contains(conceptId))
-        {
-            item = new ConceptgraphItem(this->graph()->get(conceptId), ConceptgraphItem::CONCEPT);
-            item->setPos(qrand() % dim - dim/2, qrand() % dim - dim/2);
-            addItem(item);
-            currentItems[conceptId] = item;
-        } else {
-            item = dynamic_cast<ConceptgraphItem*>(currentItems[conceptId]);
-        }
-        validItems[conceptId] = item;
-    }
     for (auto relId : allRelations)
     {
         // Create or get item
@@ -171,6 +156,21 @@ void ConceptgraphScene::visualize(Conceptgraph* graph)
             item = dynamic_cast<ConceptgraphItem*>(currentItems[relId]);
         }
         validItems[relId] = item;
+    }
+    for (auto conceptId : allConcepts)
+    {
+        // Create or get item
+        ConceptgraphItem *item;
+        if (!currentItems.contains(conceptId))
+        {
+            item = new ConceptgraphItem(this->graph()->get(conceptId), ConceptgraphItem::CONCEPT);
+            item->setPos(qrand() % dim - dim/2, qrand() % dim - dim/2);
+            addItem(item);
+            currentItems[conceptId] = item;
+        } else {
+            item = dynamic_cast<ConceptgraphItem*>(currentItems[conceptId]);
+        }
+        validItems[conceptId] = item;
     }
 
     // Everything which is in validItem should be wired
@@ -303,7 +303,7 @@ void ConceptgraphEditor::keyPressEvent(QKeyEvent * event)
             fbscene->setLayoutEnabled(!fbscene->isLayoutEnabled());
         }
     }
-    else if (selection.size())
+    else if (selection.size() && (event->key() != Qt::Key_Control))
     {
         if (!isEditLabelMode)
         {
@@ -312,7 +312,12 @@ void ConceptgraphEditor::keyPressEvent(QKeyEvent * event)
             currentLabel = "";
         }
         // Update current label
-        currentLabel += event->text();
+        if (event->key() != Qt::Key_Backspace)
+        {
+            currentLabel += event->text();
+        } else {
+            currentLabel.chop(1);
+        }
         for (ConceptgraphItem *item : selection)
         {
             scene()->updateEdge(item->getHyperEdgeId(), currentLabel);

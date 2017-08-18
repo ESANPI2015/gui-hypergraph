@@ -494,7 +494,7 @@ void HypergraphEdit::keyPressEvent(QKeyEvent * event)
             fbscene->setLayoutEnabled(!fbscene->isLayoutEnabled());
         }
     }
-    else if (selHItems.size())
+    else if (selHItems.size() && (event->key() != Qt::Key_Control))
     {
         if (!isEditLabelMode)
         {
@@ -503,7 +503,12 @@ void HypergraphEdit::keyPressEvent(QKeyEvent * event)
             currentLabel = "";
         }
         // Update current label
-        currentLabel += event->text();
+        if (event->key() != Qt::Key_Backspace)
+        {
+            currentLabel += event->text();
+        } else {
+            currentLabel.chop(1);
+        }
         for (HyperedgeItem *hitem : selHItems)
         {
             scene()->updateEdge(hitem->getHyperEdgeId(), currentLabel);
