@@ -334,12 +334,14 @@ void ForceBasedScene::updateLayout()
     const unsigned int N = allHyperedgeItems.size();
 
     // Global update
-    for (auto selectedEdge : allHyperedgeItems)
+    for (unsigned int i = 0; i < N; ++i)
     {
+        HyperedgeItem* selectedEdge = allHyperedgeItems.at(i);
         // For selected edge:
         // a) calculate all repelling forces to other nodes
-        for (auto other : allHyperedgeItems)
+        for (unsigned int j = i; j < N; ++j)
         {
+            HyperedgeItem* other = allHyperedgeItems.at(j);
             if (other == selectedEdge)
                 continue;
             QPointF delta(selectedEdge->pos() - other->pos()); // points towards selectedEdge
@@ -350,9 +352,11 @@ void ForceBasedScene::updateLayout()
             if (length_sqr > 1e-9)
             {
                 qreal length = qSqrt(length_sqr);
-                if (length < mEquilibriumDistance * 10.f)
+                // Skip if distance is one order of magnitude greater than equilibrium distance
+                if (length < mEquilibriumDistance * 10.)
                 {
                     displacements[selectedEdge] +=  mEquilibriumDistance_sqr * mEquilibriumDistance * delta / length / length_sqr / N; // ~ 1/d^2 * 1/N
+                    displacements[other]        -=  mEquilibriumDistance_sqr * mEquilibriumDistance * delta / length / length_sqr / N; // ~ 1/d^2 * 1/N
                 }
             } 
         }
