@@ -27,6 +27,7 @@ class HypergraphGUI : public QMainWindow
         void loadHypergraphRequest();
         void storeHypergraphRequest();
         void onYAMLStringReady(const QString& yamlString);
+        void setEquilibriumDistanceRequest(qreal distance);
 
     private:
         Ui::HypergraphGUI* mpUi;
