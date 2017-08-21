@@ -404,6 +404,12 @@ ConceptgraphWidget::ConceptgraphWidget(QWidget *parent)
 
     delete old2;
     delete old;
+
+    // Connect
+    connect(mpConceptScene, SIGNAL(conceptAdded(const unsigned)), this, SLOT(onGraphChanged(const unsigned)));
+    connect(mpConceptScene, SIGNAL(conceptRemoved(const unsigned)), this, SLOT(onGraphChanged(const unsigned)));
+    connect(mpConceptScene, SIGNAL(relationAdded(const unsigned)), this, SLOT(onGraphChanged(const unsigned)));
+    connect(mpConceptScene, SIGNAL(relationRemoved(const unsigned)), this, SLOT(onGraphChanged(const unsigned)));
 }
 
 ConceptgraphWidget::~ConceptgraphWidget()
@@ -420,11 +426,6 @@ void ConceptgraphWidget::showEvent(QShowEvent *event)
 void ConceptgraphWidget::loadFromGraph(Conceptgraph& graph)
 {
     mpConceptScene->visualize(&graph);
-    // update stats
-    mpUi->statsLabel->setText(
-                            "CONCEPTS: " + QString::number(mpConceptScene->graph()->find().size()) +
-                            "  RELATIONS: " + QString::number(mpConceptScene->graph()->relations().size())
-                             );
 }
 
 void ConceptgraphWidget::loadFromYAMLFile(const QString& fileName)
@@ -443,4 +444,13 @@ void ConceptgraphWidget::loadFromYAML(const QString& yamlString)
     loadFromGraph(*newCGraph);
     delete newCGraph;
     delete newGraph;
+}
+
+void ConceptgraphWidget::onGraphChanged(const unsigned id)
+{
+    // Gets triggered whenever a concept||relations has been added||removed
+    mpUi->statsLabel->setText(
+                            "CONCEPTS: " + QString::number(mpConceptScene->graph()->find().size()) +
+                            "  RELATIONS: " + QString::number(mpConceptScene->graph()->relations().size())
+                             );
 }
