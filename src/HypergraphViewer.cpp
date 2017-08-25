@@ -77,7 +77,7 @@ void HypergraphScene::addEdge(const QString& label)
     {
         // Find a nice available id for it
         unsigned id = qHash(label);
-        while (!currentGraph->create(id, label.toStdString())) id++;
+        while (currentGraph->create(id, label.toStdString()).empty()) id++;
         visualize();
     }
 }

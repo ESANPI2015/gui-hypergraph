@@ -72,7 +72,7 @@ void ConceptgraphScene::addConcept(const unsigned id, const QString& label)
     if (g)
     {
         unsigned theId = id > 0 ? id : qHash(label);
-        while (!g->create(theId, label.toStdString())) theId++;
+        while (g->create(theId, label.toStdString()).empty()) theId++;
         visualize();
     }
 }
@@ -83,7 +83,7 @@ void ConceptgraphScene::addRelation(const unsigned fromId, const unsigned toId, 
     if (g)
     {
         unsigned theId = id > 0 ? id : qHash(label);
-        while (!g->relate(theId, fromId, toId, label.toStdString())) theId++;
+        while (g->relate(theId, fromId, toId, label.toStdString()).empty()) theId++;
         visualize();
     }
 }
