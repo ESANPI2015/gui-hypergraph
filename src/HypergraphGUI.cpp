@@ -2,7 +2,7 @@
 #include "ui_HypergraphGUI.h"
 
 #include "HypergraphViewer.hpp"
-#include "ConceptgraphViewer.hpp"
+#include "CommonConceptGraphViewer.hpp"
 #include "HypergraphControl.hpp"
 #include <QDockWidget>
 #include <QTabWidget>
@@ -62,11 +62,11 @@ void HypergraphGUI::clearHypergraphRequest()
 
 void HypergraphGUI::newHypergraphRequest()
 {
-    ConceptgraphWidget* mpHypergraphViewer = new ConceptgraphWidget();
+    CommonConceptGraphWidget* mpHypergraphViewer = new CommonConceptGraphWidget();
     //mpViewerTabWidget->addTab(mpHypergraphViewer, "Hypergraph");
-    mpViewerTabWidget->addTab(mpHypergraphViewer, "Conceptgraph");
+    mpViewerTabWidget->addTab(mpHypergraphViewer, "CommonConceptGraph");
     connect(mpHypergraphViewer, SIGNAL(YAMLStringReady(const QString&)), this, SLOT(onYAMLStringReady(const QString&)));
-    Conceptgraph empty;
+    CommonConceptGraph empty;
     mpHypergraphViewer->loadFromGraph(empty);
 }
 
@@ -98,9 +98,9 @@ void HypergraphGUI::loadHypergraphRequest()
             // TODO: Create a new tab. The question is if it should be a CONCEPTGRAPH or a HYPEREDGE VIEWER (check the UREDGES!)
             // Or just ask the user :)
             //HypergraphViewer* mpHypergraphViewer = new HypergraphViewer();
-            ConceptgraphWidget* mpHypergraphViewer = new ConceptgraphWidget();
+            CommonConceptGraphWidget* mpHypergraphViewer = new CommonConceptGraphWidget();
             //mpViewerTabWidget->addTab(mpHypergraphViewer, "Hypergraph");
-            mpViewerTabWidget->addTab(mpHypergraphViewer, "Conceptgraph");
+            mpViewerTabWidget->addTab(mpHypergraphViewer, "CommonConceptGraph");
             connect(mpHypergraphViewer, SIGNAL(YAMLStringReady(const QString&)), this, SLOT(onYAMLStringReady(const QString&)));
             mpHypergraphViewer->loadFromYAML(yamlString);
         } else {

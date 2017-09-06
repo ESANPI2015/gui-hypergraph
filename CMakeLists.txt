@@ -46,19 +46,23 @@ set(SOURCES_gui
     src/HypergraphGUI.cpp
     src/HypergraphViewer.cpp
     src/ConceptgraphViewer.cpp
+    src/CommonConceptGraphViewer.cpp
     src/HypergraphControl.cpp
     src/HyperedgeItem.cpp
     src/ConceptgraphItem.cpp
+    src/CommonConceptGraphItem.cpp
     )
 set(QT_HEADERS_gui # header which should be processed by moc
     include/HypergraphGUI.hpp
     include/HypergraphViewer.hpp
     include/ConceptgraphViewer.hpp
+    include/CommonConceptGraphViewer.hpp
     include/HypergraphControl.hpp
     )
 set(HEADERS_gui # normal cpp-headers, for installing
     include/HyperedgeItem.hpp
     include/ConceptgraphItem.hpp
+    include/CommonConceptGraphItem.hpp
     )
 set(FORMS_gui
     forms/HypergraphGUI.ui
