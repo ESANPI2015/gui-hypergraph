@@ -23,8 +23,8 @@ HyperedgeItem::~HyperedgeItem()
 
 QPointF HyperedgeItem::centerPos()
 {
-    QPointF topLeft(pos());
-    QRectF  rect(boundingRect());
+    QPointF topLeft(scenePos());
+    QRectF  rect(childrenBoundingRect() | boundingRect());
     return (QPointF(topLeft.x() + rect.width()/2., topLeft.y() + rect.height()/2.));
 }
 
@@ -64,6 +64,11 @@ QVariant HyperedgeItem::itemChange(GraphicsItemChange change,
         {
             // When this happens, we have to redraw all the connections to/from other items
             updateEdgeItems();
+            // If we are part of a parent item we have to call its update func
+            if (parentItem())
+            {
+                parentItem()->update();
+            }
             break;
         }
         default:
@@ -77,11 +82,17 @@ QVariant HyperedgeItem::itemChange(GraphicsItemChange change,
 void HyperedgeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
            QWidget *widget)
 {
+    QRectF r = boundingRect();
+    QPen p = painter->pen();
+
+    r.setWidth(r.width() - p.width());
+    r.setHeight(r.height() - p.width());
+
     if (isSelected())
         painter->setBrush(Qt::yellow);
     else
         painter->setBrush(Qt::white);
-    painter->drawRoundedRect(option->exposedRect, 5, 5);
+    painter->drawRoundedRect(r, 5, 5);
     QGraphicsTextItem::paint(painter, option, widget);
 }
 
@@ -118,8 +129,8 @@ QRectF EdgeItem::boundingRect() const
 
     float x = qMin(a.x(), b.x());
     float y = qMin(a.y(), b.y());
-    float w = qAbs(qMax(a.x(), b.x()) - x);    
-    float h = qAbs(qMax(a.y(), b.y()) - y);    
+    float w = qAbs(qMax(a.x(), b.x()) - x);
+    float h = qAbs(qMax(a.y(), b.y()) - y);
 
     return QRectF(x-5,y-5,w+10,h+10);
 }
@@ -129,14 +140,10 @@ void EdgeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
 {
     // Get the length and the vector between source and target
     QPointF delta(mpTargetEdge->centerPos() - mpSourceEdge->centerPos());
-    float len = qSqrt(delta.x() * delta.x() + delta.y() * delta.y() + 1);
-
-    // Calculate the maximum radius at which a direction identifier should be placed
-    QRectF targetRect(mpTargetEdge->boundingRect());
-    float maxR = qSqrt(targetRect.width() * targetRect.width() + targetRect.height() * targetRect.height()) / 2;
-    QPointF circlePos(mpTargetEdge->centerPos() - delta / len * maxR);
-    QRectF rect(circlePos.x()-5, circlePos.y()-5, 10, 10);
-
+    float len_sqr = delta.x() * delta.x() + delta.y() * delta.y();
+    if (!(len_sqr > 0.f))
+        return;
+    float len = qSqrt(len_sqr);
     // Decide how to draw circle
     if (mType == TO)
     {
@@ -146,8 +153,18 @@ void EdgeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
         // or white otherwise
         painter->setBrush(Qt::white);
     }
-
     // paint
     painter->drawLine(mpSourceEdge->centerPos(), mpTargetEdge->centerPos());
+
+    // Draw a directional identifier only if it would be visible
+    QRectF targetRect(mpTargetEdge->boundingRect());
+    float maxR_sqr = (targetRect.width() * targetRect.width() + targetRect.height() * targetRect.height()) / 4.;
+    if (maxR_sqr > len_sqr)
+        return;
+
+    // Calculate the maximum radius at which a direction identifier should be placed
+    float maxR = qSqrt(maxR_sqr);
+    QPointF circlePos(mpTargetEdge->centerPos() - delta / len * maxR);
+    QRectF rect(circlePos.x()-5, circlePos.y()-5, 10, 10);
     painter->drawEllipse(rect);
 }

@@ -18,6 +18,12 @@ ConceptgraphItem::~ConceptgraphItem()
 void ConceptgraphItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
            QWidget *widget)
 {
+    QRectF r = boundingRect();
+    QPen p = painter->pen();
+
+    r.setWidth(r.width() - p.width());
+    r.setHeight(r.height() - p.width());
+
     if (isSelected())
         painter->setBrush(Qt::yellow);
     else
@@ -28,11 +34,11 @@ void ConceptgraphItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *
         case RELATION:
             // do not draw boundary of rect
             painter->setPen(Qt::white);
-            painter->drawRoundedRect(option->exposedRect, 5, 5);
+            painter->drawRoundedRect(r, 5, 5);
             painter->setPen(Qt::black);
             break;
         default:
-            painter->drawRoundedRect(option->exposedRect, 5, 5);
+            painter->drawRoundedRect(r, 5, 5);
             break;
     }
     QGraphicsTextItem::paint(painter, option, widget);
