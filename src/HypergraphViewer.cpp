@@ -344,7 +344,7 @@ void ForceBasedScene::updateLayout()
             HyperedgeItem* other = allHyperedgeItems.at(j);
             if (other == selectedEdge)
                 continue;
-            QPointF delta(selectedEdge->pos() - other->pos()); // points towards selectedEdge
+            QPointF delta(selectedEdge->scenePos() - other->scenePos()); // points towards selectedEdge
             qreal length_sqr = delta.x() * delta.x() + delta.y() * delta.y();
 
             // Push away according to charge model
@@ -360,6 +360,29 @@ void ForceBasedScene::updateLayout()
                 }
             } 
         }
+        // For selected edge:
+        // c) Treat parent - child relationship as attraction
+        QList<QGraphicsItem*> children(selectedEdge->childItems());
+        for (QGraphicsItem* child : children)
+        {
+            HyperedgeItem* source = selectedEdge;
+            HyperedgeItem* target = dynamic_cast<HyperedgeItem*>(child);
+            if (!target)
+                continue;
+            if (!allHyperedgeItems.contains(target))
+                continue;
+
+            QPointF delta(source->scenePos() - target->scenePos()); // points towards source
+            qreal length_sqr = delta.x() * delta.x() + delta.y() * delta.y();
+
+            // Pull according to a spring
+            if (length_sqr > 1e-9)
+            {
+                qreal length = qSqrt(length_sqr);
+                displacements[source] -=  (1. - mEquilibriumDistance / length) * delta / N; // ~ d/N
+                displacements[target] +=  (1. - mEquilibriumDistance / length) * delta / N;
+            } 
+        }
     }
 
     // b) find all EdgeItems and calc attraction forces
@@ -369,7 +392,7 @@ void ForceBasedScene::updateLayout()
         auto source = line->getSourceItem();
         auto target = line->getTargetItem();
 
-        QPointF delta(source->pos() - target->pos()); // points towards source
+        QPointF delta(source->scenePos() - target->scenePos()); // points towards source
         qreal length_sqr = delta.x() * delta.x() + delta.y() * delta.y();
 
         // Pull according to a spring
@@ -389,8 +412,13 @@ void ForceBasedScene::updateLayout()
             continue;
         if (std::isinf(displacements[edge].x()) || std::isinf(displacements[edge].y()))
             continue;
-        QPointF newPos(edge->pos() + displacements[edge]); // x = x + disp
-        edge->setPos(newPos);
+        QPointF newPos(edge->scenePos() + displacements[edge]); // x = x + disp
+        if (edge->parentItem())
+        {
+            edge->setPos(edge->mapFromScene(newPos));
+        } else {
+            edge->setPos(newPos);
+        }
     }
 }
 
