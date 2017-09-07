@@ -2,6 +2,7 @@
 #include "ui_HypergraphGUI.h"
 
 #include "HypergraphViewer.hpp"
+#include "ConceptgraphViewer.hpp"
 #include "CommonConceptGraphViewer.hpp"
 #include "HypergraphControl.hpp"
 #include <QDockWidget>
@@ -31,8 +32,8 @@ HypergraphGUI::HypergraphGUI(QWidget *parent)
 
     // Connect control
     connect(mpControl, SIGNAL(clearHypergraph()), this, SLOT(clearHypergraphRequest()));
-    connect(mpControl, SIGNAL(newHypergraph()), this, SLOT(newHypergraphRequest()));
-    connect(mpControl, SIGNAL(loadHypergraph()), this, SLOT(loadHypergraphRequest()));
+    connect(mpControl, SIGNAL(newHypergraph(HypergraphType)), this, SLOT(newHypergraphRequest(HypergraphType)));
+    connect(mpControl, SIGNAL(loadHypergraph(HypergraphType)), this, SLOT(loadHypergraphRequest(HypergraphType)));
     connect(mpControl, SIGNAL(storeHypergraph()), this, SLOT(storeHypergraphRequest()));
     connect(mpControl, SIGNAL(setEquilibriumDistance(qreal)), this, SLOT(setEquilibriumDistanceRequest(qreal)));
 }
@@ -60,17 +61,41 @@ void HypergraphGUI::clearHypergraphRequest()
     }
 }
 
-void HypergraphGUI::newHypergraphRequest()
+void HypergraphGUI::newHypergraphRequest(HypergraphType type)
 {
-    CommonConceptGraphWidget* mpHypergraphViewer = new CommonConceptGraphWidget();
-    //mpViewerTabWidget->addTab(mpHypergraphViewer, "Hypergraph");
-    mpViewerTabWidget->addTab(mpHypergraphViewer, "CommonConceptGraph");
-    connect(mpHypergraphViewer, SIGNAL(YAMLStringReady(const QString&)), this, SLOT(onYAMLStringReady(const QString&)));
-    CommonConceptGraph empty;
-    mpHypergraphViewer->loadFromGraph(empty);
+    switch (type)
+    {
+        case COMMONCONCEPTGRAPH:
+            {
+                CommonConceptGraphWidget* commonConceptGraphWidget = new CommonConceptGraphWidget();
+                mpViewerTabWidget->addTab(commonConceptGraphWidget, "CommonConceptGraph");
+                connect(commonConceptGraphWidget, SIGNAL(YAMLStringReady(const QString&)), this, SLOT(onYAMLStringReady(const QString&)));
+                CommonConceptGraph empty;
+                commonConceptGraphWidget->loadFromGraph(empty);
+            }
+            break;
+        case CONCEPTGRAPH:
+            {
+                ConceptgraphWidget* conceptGraphWidget = new ConceptgraphWidget();
+                mpViewerTabWidget->addTab(conceptGraphWidget, "Conceptgraph");
+                connect(conceptGraphWidget, SIGNAL(YAMLStringReady(const QString&)), this, SLOT(onYAMLStringReady(const QString&)));
+                Conceptgraph empty;
+                conceptGraphWidget->loadFromGraph(empty);
+            }
+            break;
+        default:
+            {
+                HypergraphViewer* hypergraphViewer = new HypergraphViewer();
+                mpViewerTabWidget->addTab(hypergraphViewer, "Hypergraph");
+                connect(hypergraphViewer, SIGNAL(YAMLStringReady(const QString&)), this, SLOT(onYAMLStringReady(const QString&)));
+                Conceptgraph empty;
+                hypergraphViewer->loadFromGraph(empty);
+            }
+            break;
+    }
 }
 
-void HypergraphGUI::loadHypergraphRequest()
+void HypergraphGUI::loadHypergraphRequest(HypergraphType type)
 {
     // Give standard dir or last used dir
     QString lastDir = QDir::currentPath();
@@ -95,17 +120,36 @@ void HypergraphGUI::loadHypergraphRequest()
             QString yamlString = fin.readAll();
             file.close();
             lastOpenedFile = fileName;
-            // TODO: Create a new tab. The question is if it should be a CONCEPTGRAPH or a HYPEREDGE VIEWER (check the UREDGES!)
-            // Or just ask the user :)
-            //HypergraphViewer* mpHypergraphViewer = new HypergraphViewer();
-            CommonConceptGraphWidget* mpHypergraphViewer = new CommonConceptGraphWidget();
-            //mpViewerTabWidget->addTab(mpHypergraphViewer, "Hypergraph");
-            mpViewerTabWidget->addTab(mpHypergraphViewer, "CommonConceptGraph");
-            connect(mpHypergraphViewer, SIGNAL(YAMLStringReady(const QString&)), this, SLOT(onYAMLStringReady(const QString&)));
-            mpHypergraphViewer->loadFromYAML(yamlString);
+            switch (type)
+            {
+                case COMMONCONCEPTGRAPH:
+                    {
+                        CommonConceptGraphWidget* commonConceptGraphWidget = new CommonConceptGraphWidget();
+                        mpViewerTabWidget->addTab(commonConceptGraphWidget, "CommonConceptGraph");
+                        connect(commonConceptGraphWidget, SIGNAL(YAMLStringReady(const QString&)), this, SLOT(onYAMLStringReady(const QString&)));
+                        commonConceptGraphWidget->loadFromYAML(yamlString);
+                    }
+                    break;
+                case CONCEPTGRAPH:
+                    {
+                        ConceptgraphWidget* conceptGraphWidget = new ConceptgraphWidget();
+                        mpViewerTabWidget->addTab(conceptGraphWidget, "Conceptgraph");
+                        connect(conceptGraphWidget, SIGNAL(YAMLStringReady(const QString&)), this, SLOT(onYAMLStringReady(const QString&)));
+                        conceptGraphWidget->loadFromYAML(yamlString);
+                    }
+                    break;
+                default:
+                    {
+                        HypergraphViewer* hypergraphViewer = new HypergraphViewer();
+                        mpViewerTabWidget->addTab(hypergraphViewer, "Hypergraph");
+                        connect(hypergraphViewer, SIGNAL(YAMLStringReady(const QString&)), this, SLOT(onYAMLStringReady(const QString&)));
+                        hypergraphViewer->loadFromYAML(yamlString);
+                    }
+                    break;
+            }
         } else {
             // Opening failed
-        }    
+        }
     }
 }
 
@@ -125,7 +169,7 @@ void HypergraphGUI::storeHypergraphRequest()
 
     // ... if everything is ok, pass request to the currently active viewer
     if (fileName != "")
-    {   
+    {
         lastSavedFile = fileName;
         // Call the currently visible viewer
         HypergraphViewer* mpHypergraphViewer = dynamic_cast<HypergraphViewer*>(mpViewerTabWidget->currentWidget());

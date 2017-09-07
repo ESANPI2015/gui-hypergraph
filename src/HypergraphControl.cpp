@@ -5,6 +5,11 @@ HypergraphControl::HypergraphControl(QWidget *parent)
 {
     mpUi = new Ui::HypergraphControl();
     mpUi->setupUi(this);
+
+    // Fill the list of possible graph types
+    mpUi->typeBox->addItem("Hypergraph",QVariant(HypergraphType::HYPERGRAPH));
+    mpUi->typeBox->addItem("Concept Graph",QVariant(HypergraphType::CONCEPTGRAPH));
+    mpUi->typeBox->addItem("Common Concept Graph",QVariant(HypergraphType::COMMONCONCEPTGRAPH));
 }
 
 HypergraphControl::~HypergraphControl()
@@ -14,7 +19,7 @@ HypergraphControl::~HypergraphControl()
 
 void HypergraphControl::on_loadButton_clicked()
 {
-    emit loadHypergraph();
+    emit loadHypergraph(static_cast<HypergraphType>(mpUi->typeBox->itemData(mpUi->typeBox->currentIndex()).toUInt()));
 }
 
 void HypergraphControl::on_saveButton_clicked()
@@ -29,7 +34,7 @@ void HypergraphControl::on_clearButton_clicked()
 
 void HypergraphControl::on_newButton_clicked()
 {
-    emit newHypergraph();
+    emit newHypergraph(static_cast<HypergraphType>(mpUi->typeBox->itemData(mpUi->typeBox->currentIndex()).toUInt()));
 }
 
 void HypergraphControl::on_equiSlider_valueChanged(int value)
