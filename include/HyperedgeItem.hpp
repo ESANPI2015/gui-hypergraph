@@ -27,6 +27,7 @@ class HyperedgeItem : public QGraphicsTextItem
         void deregisterEdgeItem(EdgeItem *line);
 
         // Tell all registered edge items to update themselves!!!
+        // Furthermore adjust own boundingrect
         void updateEdgeItems();
 
         // Change the label

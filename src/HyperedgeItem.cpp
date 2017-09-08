@@ -28,6 +28,7 @@ QPointF HyperedgeItem::centerPos()
     return (QPointF(topLeft.x() + rect.width()/2., topLeft.y() + rect.height()/2.));
 }
 
+
 void HyperedgeItem::setLabel(const QString& l)
 {
     setPlainText(l);
@@ -67,7 +68,9 @@ QVariant HyperedgeItem::itemChange(GraphicsItemChange change,
             // If we are part of a parent item we have to call its update func
             if (parentItem())
             {
-                parentItem()->update();
+                HyperedgeItem* trueParent = dynamic_cast<HyperedgeItem*>(parentItem());
+                if (trueParent)
+                    trueParent->updateEdgeItems();
             }
             break;
         }
