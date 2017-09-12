@@ -328,6 +328,9 @@ void ForceBasedScene::updateLayout()
                 allEdgeItems.append(line);
             continue;
         }
+        // Ignore children
+        if (edge->parentItem())
+            continue;
         allHyperedgeItems.append(edge);
         displacements[edge] = QPointF(0.,0.);
     }
@@ -360,29 +363,6 @@ void ForceBasedScene::updateLayout()
                 }
             } 
         }
-        // For selected edge:
-        // c) Treat parent - child relationship as attraction
-        QList<QGraphicsItem*> children(selectedEdge->childItems());
-        for (QGraphicsItem* child : children)
-        {
-            HyperedgeItem* source = selectedEdge;
-            HyperedgeItem* target = dynamic_cast<HyperedgeItem*>(child);
-            if (!target)
-                continue;
-            if (!allHyperedgeItems.contains(target))
-                continue;
-
-            QPointF delta(source->scenePos() - target->scenePos()); // points towards source
-            qreal length_sqr = delta.x() * delta.x() + delta.y() * delta.y();
-
-            // Pull according to a spring
-            if (length_sqr > 1e-9)
-            {
-                qreal length = qSqrt(length_sqr);
-                displacements[source] -=  (1. - mEquilibriumDistance / length) * delta / N; // ~ d/N
-                displacements[target] +=  (1. - mEquilibriumDistance / length) * delta / N;
-            } 
-        }
     }
 
     // b) find all EdgeItems and calc attraction forces
@@ -391,6 +371,12 @@ void ForceBasedScene::updateLayout()
         // Calculate attraction between connected nodes
         auto source = line->getSourceItem();
         auto target = line->getTargetItem();
+
+        // If source || target have parent items use them instead
+        if (source->parentItem())
+            source = dynamic_cast<HyperedgeItem*>(source->parentItem());
+        if (target->parentItem())
+            target = dynamic_cast<HyperedgeItem*>(target->parentItem());
 
         QPointF delta(source->scenePos() - target->scenePos()); // points towards source
         qreal length_sqr = delta.x() * delta.x() + delta.y() * delta.y();
