@@ -1,6 +1,7 @@
 #include "HyperedgeItem.hpp"
 #include <QWidget>
 #include <QPainter>
+#include <QPainterPath>
 #include <QColor>
 #include <QStyleOptionGraphicsItem>
 #include <QtCore>
@@ -141,33 +142,43 @@ QRectF EdgeItem::boundingRect() const
 void EdgeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
            QWidget *widget)
 {
-    // Get the length and the vector between source and target
-    QPointF delta(mpTargetEdge->centerPos() - mpSourceEdge->centerPos());
+    QPointF start(mpSourceEdge->centerPos());
+    QPointF end(mpTargetEdge->centerPos());
+    QPointF delta(end - start); // Points to end!
     float len_sqr = delta.x() * delta.x() + delta.y() * delta.y();
     if (!(len_sqr > 0.f))
         return;
     float len = qSqrt(len_sqr);
+
+    // Draw bezier curve
+    QPainterPath path;
+    QPointF c1, c2;
+    if (qAbs(delta.y()) < qAbs(delta.x()))
+    {
+        c1 = QPointF(start.x(), end.y());
+        c2 = QPointF(end.x(), start.y());
+    }
+    else
+    {
+        c1 = QPointF(end.x(), start.y());
+        c2 = QPointF(start.x(), end.y());
+    }
+    path.moveTo(start);
+    path.cubicTo(c1, c2, end);
+    painter->drawPath(path);
     // Decide how to draw circle
     if (mType == TO)
     {
-        // Draw the circle black for TO edges
-        painter->setBrush(Qt::black);
-    } else {
-        // or white otherwise
-        painter->setBrush(Qt::white);
+        // TODO: The TO-edge shall get an arrow! We need 4 different cases of an arrow!
+        QRectF targetRect(mpTargetEdge->boundingRect());
+        float maxR_sqr = (targetRect.width() * targetRect.width() + targetRect.height() * targetRect.height()) / 4.;
+        if (maxR_sqr > len_sqr)
+            return;
+
+        // Calculate the maximum radius at which a direction identifier should be placed
+        float maxR = qSqrt(maxR_sqr);
+        QPointF circlePos(end - delta / len * maxR);
+        QRectF rect(circlePos.x()-5, circlePos.y()-5, 10, 10);
+        painter->drawEllipse(rect);
     }
-    // paint
-    painter->drawLine(mpSourceEdge->centerPos(), mpTargetEdge->centerPos());
-
-    // Draw a directional identifier only if it would be visible
-    QRectF targetRect(mpTargetEdge->boundingRect());
-    float maxR_sqr = (targetRect.width() * targetRect.width() + targetRect.height() * targetRect.height()) / 4.;
-    if (maxR_sqr > len_sqr)
-        return;
-
-    // Calculate the maximum radius at which a direction identifier should be placed
-    float maxR = qSqrt(maxR_sqr);
-    QPointF circlePos(mpTargetEdge->centerPos() - delta / len * maxR);
-    QRectF rect(circlePos.x()-5, circlePos.y()-5, 10, 10);
-    painter->drawEllipse(rect);
 }
