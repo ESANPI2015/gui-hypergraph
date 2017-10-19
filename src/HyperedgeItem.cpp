@@ -155,13 +155,13 @@ void EdgeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
     QPointF c1, c2;
     if (qAbs(delta.y()) < qAbs(delta.x()))
     {
-        c1 = QPointF(start.x(), end.y());
-        c2 = QPointF(end.x(), start.y());
+        c1 = QPointF(end.x(), start.y());
+        c2 = QPointF(start.x(), end.y());
     }
     else
     {
-        c1 = QPointF(end.x(), start.y());
-        c2 = QPointF(start.x(), end.y());
+        c1 = QPointF(start.x(), end.y());
+        c2 = QPointF(end.x(), start.y());
     }
     path.moveTo(start);
     path.cubicTo(c1, c2, end);
