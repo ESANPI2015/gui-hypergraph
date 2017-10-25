@@ -66,29 +66,33 @@ void ConceptgraphScene::removeItem(QGraphicsItem *item)
     ForceBasedScene::removeItem(item);
 }
 
-void ConceptgraphScene::addConcept(const unsigned id, const QString& label)
+void ConceptgraphScene::addConcept(const UniqueId id, const QString& label)
 {
     Conceptgraph *g = graph();
     if (g)
     {
-        unsigned theId = id > 0 ? id : qHash(label);
-        while (g->create(theId, label.toStdString()).empty()) theId++;
+        if (id.empty())
+            g->create(label.toStdString());
+        else
+            g->create(id, label.toStdString());
         visualize();
     }
 }
 
-void ConceptgraphScene::addRelation(const unsigned fromId, const unsigned toId, const unsigned id, const QString& label)
+void ConceptgraphScene::addRelation(const UniqueId fromId, const UniqueId toId, const UniqueId id, const QString& label)
 {
     Conceptgraph *g = graph();
     if (g)
     {
-        unsigned theId = id > 0 ? id : qHash(label);
-        while (g->relate(theId, fromId, toId, label.toStdString()).empty()) theId++;
+        if (id.empty())
+            g->relate(Hyperedges{toId}, Hyperedges{fromId}, label.toStdString());
+        else
+            g->relate(id, Hyperedges{toId}, Hyperedges{fromId}, label.toStdString());
         visualize();
     }
 }
 
-void ConceptgraphScene::removeEdge(const unsigned id)
+void ConceptgraphScene::removeEdge(const UniqueId id)
 {
     Conceptgraph *g = graph();
     if (g)
@@ -98,7 +102,7 @@ void ConceptgraphScene::removeEdge(const unsigned id)
     }
 }
 
-void ConceptgraphScene::updateEdge(const unsigned int id, const QString& label)
+void ConceptgraphScene::updateEdge(const UniqueId id, const QString& label)
 {
     Conceptgraph *g = graph();
     if (g)
@@ -141,7 +145,7 @@ void ConceptgraphScene::visualize(Conceptgraph* graph)
     int dim = N * mEquilibriumDistance / 2;
 
     // Then we go through all edges and check if we already have an ConceptgraphItem or not
-    QMap<unsigned int,ConceptgraphItem*> validItems;
+    QMap<UniqueId,ConceptgraphItem*> validItems;
     for (auto relId : allRelations)
     {
         // Create or get item
@@ -174,7 +178,7 @@ void ConceptgraphScene::visualize(Conceptgraph* graph)
     }
 
     // Everything which is in validItem should be wired
-    QMap<unsigned int,ConceptgraphItem*>::const_iterator it;
+    QMap<UniqueId,ConceptgraphItem*>::const_iterator it;
     for (it = validItems.begin(); it != validItems.end(); ++it)
     {
         auto edgeId = it.key();
@@ -240,8 +244,8 @@ void ConceptgraphScene::visualize(Conceptgraph* graph)
 
     // Everything which is in currentItems but not in validItems has to be removed
     // First: remove edges
-    QMap<unsigned int,HyperedgeItem*> toBeChecked(currentItems); // NOTE: Since we modify currentItems, we should make a snapshot of the current state
-    QMap<unsigned int,HyperedgeItem*>::const_iterator it2;
+    QMap<UniqueId,HyperedgeItem*> toBeChecked(currentItems); // NOTE: Since we modify currentItems, we should make a snapshot of the current state
+    QMap<UniqueId,HyperedgeItem*>::const_iterator it2;
     for (it2 = toBeChecked.begin(); it2 != toBeChecked.end(); ++it2)
     {
         auto id = it2.key();
@@ -406,10 +410,10 @@ ConceptgraphWidget::ConceptgraphWidget(QWidget *parent)
     delete old;
 
     // Connect
-    connect(mpConceptScene, SIGNAL(conceptAdded(const unsigned)), this, SLOT(onGraphChanged(const unsigned)));
-    connect(mpConceptScene, SIGNAL(conceptRemoved(const unsigned)), this, SLOT(onGraphChanged(const unsigned)));
-    connect(mpConceptScene, SIGNAL(relationAdded(const unsigned)), this, SLOT(onGraphChanged(const unsigned)));
-    connect(mpConceptScene, SIGNAL(relationRemoved(const unsigned)), this, SLOT(onGraphChanged(const unsigned)));
+    connect(mpConceptScene, SIGNAL(conceptAdded(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
+    connect(mpConceptScene, SIGNAL(conceptRemoved(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
+    connect(mpConceptScene, SIGNAL(relationAdded(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
+    connect(mpConceptScene, SIGNAL(relationRemoved(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
 }
 
 ConceptgraphWidget::~ConceptgraphWidget()
@@ -446,7 +450,7 @@ void ConceptgraphWidget::loadFromYAML(const QString& yamlString)
     delete newGraph;
 }
 
-void ConceptgraphWidget::onGraphChanged(const unsigned id)
+void ConceptgraphWidget::onGraphChanged(const UniqueId id)
 {
     // Gets triggered whenever a concept||relations has been added||removed
     mpUi->statsLabel->setText(

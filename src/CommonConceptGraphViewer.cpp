@@ -67,29 +67,29 @@ void CommonConceptGraphScene::removeItem(QGraphicsItem *item)
     ConceptgraphScene::removeItem(item);
 }
 
-void CommonConceptGraphScene::addConcept(const unsigned id, const QString& label)
+void CommonConceptGraphScene::addConcept(const UniqueId id, const QString& label)
 {
     //CommonConceptGraph *g = graph();
     //if (g)
     //{
-    //    unsigned theId = id > 0 ? id : qHash(label);
+    //    UniqueId theId = id > 0 ? id : qHash(label);
     //    while (g->create(theId, label.toStdString()).empty()) theId++;
     //    visualize();
     //}
 }
 
-void CommonConceptGraphScene::addRelation(const unsigned fromId, const unsigned toId, const unsigned id, const QString& label)
+void CommonConceptGraphScene::addRelation(const UniqueId fromId, const UniqueId toId, const UniqueId id, const QString& label)
 {
     //CommonConceptGraph *g = graph();
     //if (g)
     //{
-    //    unsigned theId = id > 0 ? id : qHash(label);
+    //    UniqueId theId = id > 0 ? id : qHash(label);
     //    while (g->relate(theId, fromId, toId, label.toStdString()).empty()) theId++;
     //    visualize();
     //}
 }
 
-void CommonConceptGraphScene::removeEdge(const unsigned id)
+void CommonConceptGraphScene::removeEdge(const UniqueId id)
 {
     CommonConceptGraph *g = graph();
     if (g)
@@ -99,7 +99,7 @@ void CommonConceptGraphScene::removeEdge(const unsigned id)
     }
 }
 
-void CommonConceptGraphScene::updateEdge(const unsigned int id, const QString& label)
+void CommonConceptGraphScene::updateEdge(const UniqueId id, const QString& label)
 {
     //CommonConceptGraph *g = graph();
     //if (g)
@@ -141,11 +141,11 @@ void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
     auto allInstances = this->graph()->instancesOf(this->graph()->find());
 
     // First pass: Sort instances into different sets
-    QMap< unsigned int, Hyperedges > childrenOfParent;
-    QMap< unsigned int, Hyperedges > parentsOfChild;
-    QMap< unsigned int, Hyperedges > partsOfWhole;
-    QMap< unsigned int, Hyperedges > superclassesOfInst;
-    QMap< unsigned int, Hyperedges > endpointsOfConnector;;
+    QMap< UniqueId, Hyperedges > childrenOfParent;
+    QMap< UniqueId, Hyperedges > parentsOfChild;
+    QMap< UniqueId, Hyperedges > partsOfWhole;
+    QMap< UniqueId, Hyperedges > superclassesOfInst;
+    QMap< UniqueId, Hyperedges > endpointsOfConnector;;
     for (auto instanceId : allInstances)
     {
         //std::cout << "Instance " << this->graph()->get(instanceId)->label() << "\n";
@@ -172,7 +172,7 @@ void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
     }
 
     // Remove parts from allInstances
-    QMap< unsigned int, Hyperedges >::const_iterator it;
+    QMap< UniqueId, Hyperedges >::const_iterator it;
     for (it = partsOfWhole.begin(); it != partsOfWhole.end(); ++it)
     {
         allInstances = subtract(allInstances, it.value());
@@ -196,7 +196,7 @@ void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
     //std::cout << "#Instances\\Parts: " << N << "\n";
 
     // Second pass: Draw all instances except the parts
-    QMap<unsigned int,CommonConceptGraphItem*> validItems;
+    QMap<UniqueId,CommonConceptGraphItem*> validItems;
     for (auto instanceId : allInstances)
     {
         // Create or get item
@@ -272,8 +272,8 @@ void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
 
     // Everything which is in currentItems but not in validItems has to be removed
     // First: remove edges and free children
-    QMap<unsigned int,HyperedgeItem*> toBeChecked(currentItems); // NOTE: Since we modify currentItems, we should make a snapshot of the current state
-    QMap<unsigned int,HyperedgeItem*>::const_iterator it2;
+    QMap<UniqueId,HyperedgeItem*> toBeChecked(currentItems); // NOTE: Since we modify currentItems, we should make a snapshot of the current state
+    QMap<UniqueId,HyperedgeItem*>::const_iterator it2;
     for (it2 = toBeChecked.begin(); it2 != toBeChecked.end(); ++it2)
     {
         auto id = it2.key();
@@ -450,10 +450,10 @@ CommonConceptGraphWidget::CommonConceptGraphWidget(QWidget *parent)
     delete old;
 
     // Connect
-    connect(mpCommonConceptScene, SIGNAL(conceptAdded(const unsigned)), this, SLOT(onGraphChanged(const unsigned)));
-    connect(mpCommonConceptScene, SIGNAL(conceptRemoved(const unsigned)), this, SLOT(onGraphChanged(const unsigned)));
-    connect(mpCommonConceptScene, SIGNAL(relationAdded(const unsigned)), this, SLOT(onGraphChanged(const unsigned)));
-    connect(mpCommonConceptScene, SIGNAL(relationRemoved(const unsigned)), this, SLOT(onGraphChanged(const unsigned)));
+    connect(mpCommonConceptScene, SIGNAL(conceptAdded(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
+    connect(mpCommonConceptScene, SIGNAL(conceptRemoved(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
+    connect(mpCommonConceptScene, SIGNAL(relationAdded(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
+    connect(mpCommonConceptScene, SIGNAL(relationRemoved(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
 }
 
 CommonConceptGraphWidget::~CommonConceptGraphWidget()
@@ -490,7 +490,7 @@ void CommonConceptGraphWidget::loadFromYAML(const QString& yamlString)
     delete newGraph;
 }
 
-void CommonConceptGraphWidget::onGraphChanged(const unsigned id)
+void CommonConceptGraphWidget::onGraphChanged(const UniqueId id)
 {
     // Gets triggered whenever a concept||relations has been added||removed
     mpUi->statsLabel->setText(

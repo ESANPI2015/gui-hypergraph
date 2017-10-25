@@ -23,17 +23,17 @@ class CommonConceptGraphScene : public ConceptgraphScene
         QList<CommonConceptGraphItem*> selectedCommonConceptGraphItems();
 
     signals:
-        void conceptAdded(const unsigned id);
-        void conceptRemoved(const unsigned id);
-        void relationAdded(const unsigned id);
-        void relationRemoved(const unsigned id);
+        void conceptAdded(const UniqueId id);
+        void conceptRemoved(const UniqueId id);
+        void relationAdded(const UniqueId id);
+        void relationRemoved(const UniqueId id);
 
     public slots:
         void visualize(CommonConceptGraph* graph=NULL);
-        void addConcept(const unsigned id, const QString& label);
-        void addRelation(const unsigned fromId, const unsigned toId, const unsigned id, const QString& label);
-        void removeEdge(const unsigned id);
-        void updateEdge(const unsigned int id, const QString& label);
+        void addConcept(const UniqueId id, const QString& label);
+        void addRelation(const UniqueId fromId, const UniqueId toId, const UniqueId id, const QString& label);
+        void removeEdge(const UniqueId id);
+        void updateEdge(const UniqueId id, const QString& label);
 };
 
 class CommonConceptGraphEditor : public ConceptgraphEditor
@@ -67,7 +67,7 @@ class CommonConceptGraphWidget : public ConceptgraphWidget
         void loadFromYAMLFile(const QString& fileName);
         void loadFromYAML(const QString& yamlString);
         void loadFromGraph(CommonConceptGraph& graph);
-        void onGraphChanged(const unsigned id);
+        void onGraphChanged(const UniqueId id);
 
     protected:
         // Triggered when widget is about to get visible

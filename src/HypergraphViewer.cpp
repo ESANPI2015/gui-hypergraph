@@ -75,14 +75,12 @@ void HypergraphScene::addEdge(const QString& label)
 {
     if (currentGraph)
     {
-        // Find a nice available id for it
-        unsigned id = qHash(label);
-        while (currentGraph->create(id, label.toStdString()).empty()) id++;
+        currentGraph->create(label.toStdString());
         visualize();
     }
 }
 
-void HypergraphScene::removeEdge(const unsigned int id)
+void HypergraphScene::removeEdge(const UniqueId id)
 {
     if (currentGraph)
     {
@@ -91,17 +89,17 @@ void HypergraphScene::removeEdge(const unsigned int id)
     }
 }
 
-void HypergraphScene::connectEdges(const unsigned int fromId, const unsigned int id, const unsigned int toId)
+void HypergraphScene::connectEdges(const UniqueId fromId, const UniqueId id, const UniqueId toId)
 {
     if (currentGraph)
     {
-        currentGraph->from(fromId, id);
-        currentGraph->to(id, toId);
+        currentGraph->from(Hyperedges{fromId}, Hyperedges{id});
+        currentGraph->to(Hyperedges{id}, Hyperedges{toId});
         visualize();
     }
 }
 
-void HypergraphScene::updateEdge(const unsigned int id, const QString& label)
+void HypergraphScene::updateEdge(const UniqueId id, const QString& label)
 {
     if (currentGraph)
     {
@@ -139,7 +137,7 @@ void HypergraphScene::visualize(Hypergraph* graph)
     auto allEdges = currentGraph->find();
 
     // Then we go through all edges and check if we already have an HyperedgeItem or not
-    QMap<unsigned int,HyperedgeItem*> validItems;
+    QMap<UniqueId,HyperedgeItem*> validItems;
     for (auto edgeId : allEdges)
     {
         auto x = currentGraph->get(edgeId);
@@ -160,7 +158,7 @@ void HypergraphScene::visualize(Hypergraph* graph)
     }
     
     // Everything which is in validItem should be wired
-    QMap<unsigned int,HyperedgeItem*>::const_iterator it;
+    QMap<UniqueId,HyperedgeItem*>::const_iterator it;
     for (it = validItems.begin(); it != validItems.end(); ++it)
     {
         auto edgeId = it.key();
@@ -228,7 +226,7 @@ void HypergraphScene::visualize(Hypergraph* graph)
 
     // Everything which is in currentItems but not in validItems has to be removed
     // First: remove edges
-    QMap<unsigned int,HyperedgeItem*> toBeChecked(currentItems);
+    QMap<UniqueId,HyperedgeItem*> toBeChecked(currentItems);
     for (it = toBeChecked.begin(); it != toBeChecked.end(); ++it)
     {
         auto id = it.key();

@@ -44,9 +44,9 @@ class HypergraphScene : public QGraphicsScene
 
     signals:
         // Signals emitted
-        void edgeAdded(const unsigned int id);
-        void edgeRemoved(const unsigned int id);
-        void edgesConnected(const unsigned int fromId, const unsigned int toId);
+        void edgeAdded(const UniqueId id);
+        void edgeRemoved(const UniqueId id);
+        void edgesConnected(const UniqueId fromId, const UniqueId toId);
 
     public slots:
         // This is the constructing function of the hyperedge scene
@@ -60,14 +60,14 @@ class HypergraphScene : public QGraphicsScene
 
         // Slots to modify the underlying hyperedge system
         void addEdge(const QString& label="");
-        void removeEdge(const unsigned int id);
-        void connectEdges(const unsigned int fromId, const unsigned int id, const unsigned int toId);
-        void updateEdge(const unsigned int id, const QString& label);
+        void removeEdge(const UniqueId id);
+        void connectEdges(const UniqueId fromId, const UniqueId id, const UniqueId toId);
+        void updateEdge(const UniqueId id, const QString& label);
 
     protected:
         bool mEnabled;
         Hypergraph *currentGraph;
-        QMap<unsigned int, HyperedgeItem*> currentItems;
+        QMap<UniqueId, HyperedgeItem*> currentItems;
 };
 
 class ForceBasedScene : public HypergraphScene

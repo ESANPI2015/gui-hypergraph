@@ -17,7 +17,7 @@ class HyperedgeItem : public QGraphicsTextItem
         void paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
                    QWidget *widget);
 
-        unsigned int getHyperEdgeId()
+        std::string getHyperEdgeId()
         {
             return edgeId;
         }
@@ -44,7 +44,7 @@ class HyperedgeItem : public QGraphicsTextItem
         /*Callback to inform others when the item changed position or size*/
         virtual QVariant itemChange(GraphicsItemChange change, const QVariant& value);
 
-        unsigned int edgeId;
+        std::string edgeId;
         QSet<EdgeItem*> mEdgeSet;
 };
 
