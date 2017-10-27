@@ -6,6 +6,7 @@
 #include <QStyleOptionGraphicsItem>
 #include <QtCore>
 #include "Hyperedge.hpp"
+#include <iostream>
 
 HyperedgeItem::HyperedgeItem(Hyperedge *edge)
 : edgeId(edge->id())
@@ -16,6 +17,7 @@ HyperedgeItem::HyperedgeItem(Hyperedge *edge)
     setVisible(true);
     setZValue(1);
     setPlainText(QString::fromStdString(edge->label()));
+    lastPosUsed = QPointF(0.f,30.f);
 }
 
 HyperedgeItem::~HyperedgeItem()
@@ -74,6 +76,12 @@ QVariant HyperedgeItem::itemChange(GraphicsItemChange change,
                     trueParent->updateEdgeItems();
             }
             break;
+        }
+        case ItemChildAddedChange:
+        {
+            QGraphicsItem* child = qvariant_cast<QGraphicsItem*>(value);
+            child->setPos(lastPosUsed);
+            lastPosUsed.setY(lastPosUsed.y() + 30.f);
         }
         default:
         {

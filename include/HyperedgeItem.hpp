@@ -46,6 +46,9 @@ class HyperedgeItem : public QGraphicsTextItem
 
         std::string edgeId;
         QSet<EdgeItem*> mEdgeSet;
+
+        /*last pos added*/
+        QPointF lastPosUsed;
 };
 
 class EdgeItem : public QGraphicsItem
