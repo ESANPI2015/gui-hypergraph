@@ -34,6 +34,11 @@ class CommonConceptGraphScene : public ConceptgraphScene
         void addRelation(const UniqueId fromId, const UniqueId toId, const UniqueId id, const QString& label);
         void removeEdge(const UniqueId id);
         void updateEdge(const UniqueId id, const QString& label);
+        void showClasses(const bool value);
+        void showInstances(const bool value);
+    protected:
+        bool mShowClasses;
+        bool mShowInstances;
 };
 
 class CommonConceptGraphEditor : public ConceptgraphEditor
