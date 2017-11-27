@@ -29,6 +29,8 @@ class CommonConceptGraphItem : public HyperedgeItem
             return mType;
         }
 
+        void setLabel(const QString& l, const QString& cl);
+
     protected:
         CommonConceptGraphItemType mType;
 };

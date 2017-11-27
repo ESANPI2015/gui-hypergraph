@@ -10,7 +10,7 @@ CommonConceptGraphItem::CommonConceptGraphItem(Hyperedge *edge, CommonConceptGra
 : HyperedgeItem(edge)
 {
     mType = type;
-    setLabel(QString::fromStdString(edge->label() + ":" + superClassLabel));
+    setLabel(QString::fromStdString(edge->label()), QString::fromStdString(superClassLabel));
 }
 
 CommonConceptGraphItem::~CommonConceptGraphItem()
@@ -20,6 +20,11 @@ CommonConceptGraphItem::~CommonConceptGraphItem()
 QRectF CommonConceptGraphItem::boundingRect() const
 {
     return (childrenBoundingRect() | HyperedgeItem::boundingRect());
+}
+
+void CommonConceptGraphItem::setLabel(const QString& l, const QString& cl)
+{
+    HyperedgeItem::setLabel(l + " : " + cl);
 }
 
 void CommonConceptGraphItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,

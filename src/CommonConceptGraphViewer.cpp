@@ -103,12 +103,12 @@ void CommonConceptGraphScene::removeEdge(const UniqueId id)
 
 void CommonConceptGraphScene::updateEdge(const UniqueId id, const QString& label)
 {
-    //CommonConceptGraph *g = graph();
-    //if (g)
-    //{
-    //    g->get(id)->updateLabel(label.toStdString());
-    //    visualize();
-    //}
+    CommonConceptGraph *g = graph();
+    if (g)
+    {
+        g->get(id)->updateLabel(label.toStdString());
+        visualize();
+    }
 }
 
 void CommonConceptGraphScene::showClasses(const bool value)
@@ -221,14 +221,14 @@ void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
     {
         // Create or get item
         CommonConceptGraphItem *item;
+        // Create superclass label
+        std::string superclassLabel;
+        for (auto superclassId : superclassesOf[conceptId])
+        {
+            superclassLabel += (" " + this->graph()->get(superclassId)->label());
+        }
         if (!currentItems.contains(conceptId))
         {
-            // Create superclass label
-            std::string superclassLabel;
-            for (auto superclassId : superclassesOf[conceptId])
-            {
-                superclassLabel += (" " + this->graph()->get(superclassId)->label());
-            }
             // Check if the concept is a class or an instance
             if (allInstances.count(conceptId))
             {
@@ -242,6 +242,8 @@ void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
         } else {
             item = dynamic_cast<CommonConceptGraphItem*>(currentItems[conceptId]);
         }
+        // Make sure that the labels are up-to-date
+        item->setLabel(QString::fromStdString(this->graph()->get(conceptId)->label()), QString::fromStdString(superclassLabel));
         validItems[conceptId] = item;
     }
 
