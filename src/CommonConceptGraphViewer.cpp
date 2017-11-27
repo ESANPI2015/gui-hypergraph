@@ -174,7 +174,7 @@ void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
         children.erase(conceptId);
         childrenOfParent[conceptId] = children;
         // Find parts
-        Hyperedges parts = this->graph()->partsOf(Hyperedges{conceptId});
+        Hyperedges parts = this->graph()->componentsOf(Hyperedges{conceptId});
         parts.erase(conceptId);
         partsOfWhole[conceptId] = parts;
         // Find endpoints
@@ -199,18 +199,10 @@ void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
         superclassesOf[instanceId] = superclasses;
     }
 
-    // Remove parts from allConcepts
-    QMap< UniqueId, Hyperedges >::const_iterator it;
-    for (it = partsOfWhole.begin(); it != partsOfWhole.end(); ++it)
-    {
-        allConcepts = subtract(allConcepts, it.value());
-    }
-
     int N = allConcepts.size();
     int dim = N * mEquilibriumDistance / 2;
-    //std::cout << "#Instances\\Parts: " << N << "\n";
 
-    // Second pass: Draw all instances except the parts
+    // Second pass: Draw all instances
     QMap<UniqueId,CommonConceptGraphItem*> validItems;
     for (auto conceptId : allConcepts)
     {
@@ -321,6 +313,34 @@ void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
                 } else {
                     line = new CommonConceptGraphEdgeItem(srcItem, destItem, CommonConceptGraphEdgeItem::TO, CommonConceptGraphEdgeItem::SOLID_STRAIGHT);
                 }
+                addItem(line);
+            }
+        }
+        // Every part shall be linked to its container/whole
+        for (auto partId : partsOfWhole[conceptId])
+        {
+            // a part points to its whole
+            CommonConceptGraphItem *destItem = dynamic_cast<CommonConceptGraphItem*>(validItems[partId]);
+            if (!destItem)
+                continue;
+            // Omit loops
+            if (srcItem == destItem)
+                continue;
+            // Check if there is an edgeitem of type TO which points to destItem
+            bool found = false;
+            auto myEdgeItems = srcItem->getEdgeItems();
+            for (auto line : myEdgeItems)
+            {
+                if (line->getTargetItem() == destItem)
+                {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+            {
+                // PART-OF is the other way around destItem -- PART-OF --> srcItem!
+                auto line = new CommonConceptGraphEdgeItem(destItem, srcItem, CommonConceptGraphEdgeItem::TO, CommonConceptGraphEdgeItem::DOTTED_STRAIGHT);
                 addItem(line);
             }
         }

@@ -38,9 +38,11 @@ class CommonConceptGraphItem : public HyperedgeItem
 class CommonConceptGraphEdgeItem : public EdgeItem
 {
     public:
+        // TODO: Make this mirror the different relation types, not define styles!
         enum Style {
             SOLID_STRAIGHT,
             DASHED_STRAIGHT,
+            DOTTED_STRAIGHT,
             SOLID_CURVED
         };
         CommonConceptGraphEdgeItem(HyperedgeItem *from, HyperedgeItem *to, const Type type=TO, const Style style=SOLID_CURVED);

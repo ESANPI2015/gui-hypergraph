@@ -106,6 +106,10 @@ void CommonConceptGraphEdgeItem::paint(QPainter *painter, const QStyleOptionGrap
             painter->setPen(Qt::DashLine);
             path.lineTo(end);
             break;
+        case DOTTED_STRAIGHT:
+            painter->setPen(Qt::DotLine);
+            path.lineTo(end);
+            break;
     }
     painter->drawPath(path);
 }
