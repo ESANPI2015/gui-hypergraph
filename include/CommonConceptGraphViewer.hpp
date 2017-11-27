@@ -21,12 +21,14 @@ class CommonConceptGraphScene : public ConceptgraphScene
             return static_cast<CommonConceptGraph*>(currentGraph);
         }
         QList<CommonConceptGraphItem*> selectedCommonConceptGraphItems();
+        bool classesShown() { return mShowClasses; }
+        bool instancesShown() { return mShowInstances; }
 
     signals:
         void conceptAdded(const UniqueId id);
         void conceptRemoved(const UniqueId id);
-        void relationAdded(const UniqueId id);
-        void relationRemoved(const UniqueId id);
+    //    void relationAdded(const UniqueId id);
+    //    void relationRemoved(const UniqueId id);
 
     public slots:
         void visualize(CommonConceptGraph* graph=NULL);
@@ -36,6 +38,7 @@ class CommonConceptGraphScene : public ConceptgraphScene
         void updateEdge(const UniqueId id, const QString& label);
         void showClasses(const bool value);
         void showInstances(const bool value);
+
     protected:
         bool mShowClasses;
         bool mShowInstances;

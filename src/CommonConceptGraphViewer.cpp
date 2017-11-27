@@ -47,10 +47,7 @@ void CommonConceptGraphScene::addItem(QGraphicsItem *item)
     CommonConceptGraphItem *edge = dynamic_cast<CommonConceptGraphItem*>(item);
     if (edge)
     {
-        //if (edge->getType() != CommonConceptGraphItem::RELATION)
-        //    emit conceptAdded(edge->getHyperEdgeId());
-        //else
-        //    emit relationAdded(edge->getHyperEdgeId());
+        emit conceptAdded(edge->getHyperEdgeId());
     }
 }
 
@@ -60,10 +57,7 @@ void CommonConceptGraphScene::removeItem(QGraphicsItem *item)
     CommonConceptGraphItem *edge = dynamic_cast<CommonConceptGraphItem*>(item);
     if (edge)
     {
-        //if (edge->getType() != CommonConceptGraphItem::RELATION)
-        //    emit conceptRemoved(edge->getHyperEdgeId());
-        //else
-        //    emit relationRemoved(edge->getHyperEdgeId());
+        emit conceptRemoved(edge->getHyperEdgeId());
     }
 
     ConceptgraphScene::removeItem(item);
@@ -410,6 +404,16 @@ void CommonConceptGraphEditor::keyPressEvent(QKeyEvent * event)
             fbscene->setLayoutEnabled(!fbscene->isLayoutEnabled());
         }
     }
+    else if (event->key() == Qt::Key_F1)
+    {
+        // Hide/show classes
+        scene()->showClasses(!scene()->classesShown());
+    }
+    else if (event->key() == Qt::Key_F2)
+    {
+        // Hide/show instances
+        scene()->showInstances(!scene()->instancesShown());
+    }
     else if (selection.size() && (event->key() != Qt::Key_Control))
     {
         if (!isEditLabelMode)
@@ -510,6 +514,9 @@ CommonConceptGraphWidget::CommonConceptGraphWidget(QWidget *parent)
     delete old2;
     delete old;
 
+    //mpUi->usageLabel->setText("LMB: Select  RMB: Associate  WHEEL: Zoom  DEL: Delete  INS: Insert  PAUSE: Toggle Layouting");
+    mpUi->usageLabel->setText("LMB: Select  WHEEL: Zoom  DEL: Delete  PAUSE: Toggle Layouting  F1: Hide/Show Classes  F2: Hide/Show Instances");
+
     // Connect
     connect(mpCommonConceptScene, SIGNAL(conceptAdded(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
     connect(mpCommonConceptScene, SIGNAL(conceptRemoved(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
@@ -553,9 +560,17 @@ void CommonConceptGraphWidget::loadFromYAML(const QString& yamlString)
 
 void CommonConceptGraphWidget::onGraphChanged(const UniqueId id)
 {
+    auto allConcepts = mpCommonConceptScene->graph()->find();
+    auto allInstances = mpCommonConceptScene->graph()->instancesOf(allConcepts);
+    auto allClasses   = subtract(allConcepts, allInstances);
+    auto allRelations = mpCommonConceptScene->graph()->relations();
+    auto allFacts = mpCommonConceptScene->graph()->factsOf(allRelations);
+    auto allRelClasses = subtract(allRelations, allFacts);
     // Gets triggered whenever a concept||relations has been added||removed
     mpUi->statsLabel->setText(
-                            "CONCEPTS: " + QString::number(mpConceptScene->graph()->find().size()) +
-                            "  RELATIONS: " + QString::number(mpConceptScene->graph()->relations().size())
+                            "CLASSES: " + QString::number(allClasses.size()) +
+                            "  INSTANCES: " + QString::number(allInstances.size()) +
+                            "  RELATION CLASSES: " + QString::number(allRelClasses.size()) +
+                            "  FACTS: " + QString::number(allFacts.size())
                              );
 }
