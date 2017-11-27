@@ -601,27 +601,37 @@ void HypergraphEdit::setDefaultLabel(const QString& label)
     emit labelChanged(currentLabel);
 }
 
-HypergraphViewer::HypergraphViewer(QWidget *parent)
+HypergraphViewer::HypergraphViewer(QWidget *parent, bool doSetup)
     : QWidget(parent)
 {
-    mpUi = new Ui::HypergraphViewer();
-    mpUi->setupUi(this);
+    if (doSetup)
+    {
+        mpUi = new Ui::HypergraphViewer();
+        mpUi->setupUi(this);
 
-    mpScene = new ForceBasedScene();
-    mpView = new HypergraphEdit(mpScene);
-    mpView->show();
-    QVBoxLayout *layout = new QVBoxLayout();
-    layout->addWidget(mpView);
-    mpUi->View->setLayout(layout);
+        mpScene = new ForceBasedScene();
+        mpView = new HypergraphEdit(mpScene);
+        mpView->show();
+        QVBoxLayout *layout = new QVBoxLayout();
+        layout->addWidget(mpView);
+        mpUi->View->setLayout(layout);
 
-    mpUi->usageLabel->setText("LMB: Select  RMB: Associate  WHEEL: Zoom  DEL: Delete  INS: Insert  PAUSE: Toggle Layouting");
+        mpUi->usageLabel->setText("LMB: Select  RMB: Associate  WHEEL: Zoom  DEL: Delete  INS: Insert  PAUSE: Toggle Layouting");
+    } else {
+        mpUi = NULL;
+        mpScene = NULL;
+        mpView = NULL;
+    }
 }
 
 HypergraphViewer::~HypergraphViewer()
 {
-    delete mpView;
-    delete mpScene;
-    delete mpUi;
+    if (mpView)
+        delete mpView;
+    if (mpScene)
+        delete mpScene;
+    if (mpUi)
+        delete mpUi;
 }
 
 void HypergraphViewer::showEvent(QShowEvent *event)

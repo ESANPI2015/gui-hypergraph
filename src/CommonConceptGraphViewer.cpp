@@ -1,4 +1,5 @@
 #include "CommonConceptGraphViewer.hpp"
+#include "ui_CommonConceptGraphViewer.h"
 #include "ui_HypergraphViewer.h"
 #include "CommonConceptGraphItem.hpp"
 
@@ -489,43 +490,41 @@ void CommonConceptGraphEditor::mouseReleaseEvent(QMouseEvent* event)
     ConceptgraphEditor::mouseReleaseEvent(event);
 }
 
-CommonConceptGraphWidget::CommonConceptGraphWidget(QWidget *parent)
-: ConceptgraphWidget(parent)
+CommonConceptGraphWidget::CommonConceptGraphWidget(QWidget *parent, bool doSetup)
+: ConceptgraphWidget(parent, false)
 {
-    // The base class constructor created a pair of (ForceBasedScene, HypergraphEdit) in (mpScene, mpView)
-    // We have to get rid of them and replace them by a pair of (CommonConceptGraphScene, CommonConceptGraphEditor)
-    HypergraphScene *old = mpScene;
-    HypergraphEdit  *old2 = mpView;
-
-    mpCommonConceptScene = new CommonConceptGraphScene();
-    mpCommonConceptEditor = new CommonConceptGraphEditor(mpCommonConceptScene);
-    mpScene = mpCommonConceptScene;
-    mpView = mpCommonConceptEditor;
-    mpView->show();
-    QLayout *layout = mpUi->View->layout();
-    if (layout)
+    if (doSetup)
     {
-        delete layout;
+        // Setup my own ui
+        mpNewUi = new Ui::CommonConceptGraphViewer();
+        mpNewUi->setupUi(this);
+
+        mpCommonConceptScene = new CommonConceptGraphScene();
+        mpCommonConceptEditor = new CommonConceptGraphEditor(mpCommonConceptScene);
+        mpScene = mpCommonConceptScene;
+        mpView = mpCommonConceptEditor;
+        mpView->show();
+        QVBoxLayout *layout = new QVBoxLayout();
+        layout->addWidget(mpView);
+        mpNewUi->View->setLayout(layout);
+
+        //mpNewUi->usageLabel->setText("LMB: Select  RMB: Associate  WHEEL: Zoom  DEL: Delete  INS: Insert  PAUSE: Toggle Layouting");
+        mpNewUi->usageLabel->setText("LMB: Select  WHEEL: Zoom  DEL: Delete  PAUSE: Toggle Layouting  F1: Hide/Show Classes  F2: Hide/Show Instances");
+
+        // Connect
+        connect(mpCommonConceptScene, SIGNAL(conceptAdded(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
+        connect(mpCommonConceptScene, SIGNAL(conceptRemoved(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
+        connect(mpCommonConceptScene, SIGNAL(relationAdded(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
+        connect(mpCommonConceptScene, SIGNAL(relationRemoved(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
+    } else {
+        mpNewUi = NULL;
     }
-    layout = new QVBoxLayout();
-    layout->addWidget(mpView);
-    mpUi->View->setLayout(layout);
-
-    delete old2;
-    delete old;
-
-    //mpUi->usageLabel->setText("LMB: Select  RMB: Associate  WHEEL: Zoom  DEL: Delete  INS: Insert  PAUSE: Toggle Layouting");
-    mpUi->usageLabel->setText("LMB: Select  WHEEL: Zoom  DEL: Delete  PAUSE: Toggle Layouting  F1: Hide/Show Classes  F2: Hide/Show Instances");
-
-    // Connect
-    connect(mpCommonConceptScene, SIGNAL(conceptAdded(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
-    connect(mpCommonConceptScene, SIGNAL(conceptRemoved(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
-    connect(mpCommonConceptScene, SIGNAL(relationAdded(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
-    connect(mpCommonConceptScene, SIGNAL(relationRemoved(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
 }
 
 CommonConceptGraphWidget::~CommonConceptGraphWidget()
 {
+    if (mpNewUi)
+        delete mpNewUi;
 }
 
 void CommonConceptGraphWidget::showEvent(QShowEvent *event)
@@ -566,8 +565,17 @@ void CommonConceptGraphWidget::onGraphChanged(const UniqueId id)
     auto allRelations = mpCommonConceptScene->graph()->relations();
     auto allFacts = mpCommonConceptScene->graph()->factsOf(allRelations);
     auto allRelClasses = subtract(allRelations, allFacts);
+    // Fill the lists
+    mpNewUi->classListWidget->clear();
+    for (auto classId : allClasses) mpNewUi->classListWidget->addItem(QString::fromStdString(classId));
+    mpNewUi->instanceListWidget->clear();
+    for (auto instanceId : allInstances) mpNewUi->instanceListWidget->addItem(QString::fromStdString(instanceId));
+    mpNewUi->relationListWidget->clear();
+    for (auto relationId : allRelClasses) mpNewUi->relationListWidget->addItem(QString::fromStdString(relationId));
+    mpNewUi->factListWidget->clear();
+    for (auto factId : allFacts) mpNewUi->factListWidget->addItem(QString::fromStdString(factId));
     // Gets triggered whenever a concept||relations has been added||removed
-    mpUi->statsLabel->setText(
+    mpNewUi->statsLabel->setText(
                             "CLASSES: " + QString::number(allClasses.size()) +
                             "  INSTANCES: " + QString::number(allInstances.size()) +
                             "  RELATION CLASSES: " + QString::number(allRelClasses.size()) +

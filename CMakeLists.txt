@@ -67,6 +67,7 @@ set(HEADERS_gui # normal cpp-headers, for installing
 set(FORMS_gui
     forms/HypergraphGUI.ui
     forms/HypergraphViewer.ui
+    forms/CommonConceptGraphViewer.ui
     forms/HypergraphControl.ui
     )
 set(RESOURCES_gui

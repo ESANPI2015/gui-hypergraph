@@ -384,36 +384,30 @@ void ConceptgraphEditor::mouseReleaseEvent(QMouseEvent* event)
     HypergraphView::mouseReleaseEvent(event);
 }
 
-ConceptgraphWidget::ConceptgraphWidget(QWidget *parent)
-: HypergraphViewer(parent)
+ConceptgraphWidget::ConceptgraphWidget(QWidget *parent, bool doSetup)
+: HypergraphViewer(parent, false)
 {
-    // The base class constructor created a pair of (ForceBasedScene, HypergraphEdit) in (mpScene, mpView)
-    // We have to get rid of them and replace them by a pair of (ConceptgraphScene, ConceptgraphEditor)
-    HypergraphScene *old = mpScene;
-    HypergraphEdit  *old2 = mpView;
-
-    mpConceptScene = new ConceptgraphScene();
-    mpConceptEditor = new ConceptgraphEditor(mpConceptScene);
-    mpScene = mpConceptScene;
-    mpView = mpConceptEditor;
-    mpView->show();
-    QLayout *layout = mpUi->View->layout();
-    if (layout)
+    if (doSetup)
     {
-        delete layout;
+        // Setup my own ui
+        mpUi = new Ui::HypergraphViewer();
+        mpUi->setupUi(this);
+
+        mpConceptScene = new ConceptgraphScene();
+        mpConceptEditor = new ConceptgraphEditor(mpConceptScene);
+        mpScene = mpConceptScene;
+        mpView = mpConceptEditor;
+        mpView->show();
+        QVBoxLayout *layout = new QVBoxLayout();
+        layout->addWidget(mpView);
+        mpUi->View->setLayout(layout);
+
+        // Connect
+        connect(mpConceptScene, SIGNAL(conceptAdded(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
+        connect(mpConceptScene, SIGNAL(conceptRemoved(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
+        connect(mpConceptScene, SIGNAL(relationAdded(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
+        connect(mpConceptScene, SIGNAL(relationRemoved(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
     }
-    layout = new QVBoxLayout();
-    layout->addWidget(mpView);
-    mpUi->View->setLayout(layout);
-
-    delete old2;
-    delete old;
-
-    // Connect
-    connect(mpConceptScene, SIGNAL(conceptAdded(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
-    connect(mpConceptScene, SIGNAL(conceptRemoved(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
-    connect(mpConceptScene, SIGNAL(relationAdded(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
-    connect(mpConceptScene, SIGNAL(relationRemoved(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
 }
 
 ConceptgraphWidget::~ConceptgraphWidget()

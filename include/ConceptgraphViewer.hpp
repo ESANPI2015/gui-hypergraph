@@ -60,7 +60,7 @@ class ConceptgraphWidget : public HypergraphViewer
     Q_OBJECT
 
     public:
-        ConceptgraphWidget(QWidget *parent = 0);
+        ConceptgraphWidget(QWidget *parent = 0, bool doSetup=true);
         ~ConceptgraphWidget();
 
     public slots:

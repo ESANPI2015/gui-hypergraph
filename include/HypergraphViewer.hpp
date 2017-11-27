@@ -161,7 +161,7 @@ class HypergraphViewer : public QWidget
     Q_OBJECT
 
     public:
-        HypergraphViewer(QWidget *parent = 0);
+        HypergraphViewer(QWidget *parent = 0, bool doSetup=true);
         ~HypergraphViewer();
 
     signals:
