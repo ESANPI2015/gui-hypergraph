@@ -24,7 +24,7 @@ QRectF CommonConceptGraphItem::boundingRect() const
 
 void CommonConceptGraphItem::setLabel(const QString& l, const QString& cl)
 {
-    HyperedgeItem::setLabel(l + " : " + cl);
+    HyperedgeItem::setLabel(cl + "\n" + l);
 }
 
 void CommonConceptGraphItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,

@@ -17,7 +17,7 @@ HyperedgeItem::HyperedgeItem(Hyperedge *edge)
     setVisible(true);
     setZValue(1);
     setPlainText(QString::fromStdString(edge->label()));
-    lastPosUsed = QPointF(0.f,30.f);
+    lastPosUsed = QPointF(0.f,60.f);
 }
 
 HyperedgeItem::~HyperedgeItem()
@@ -34,7 +34,7 @@ QPointF HyperedgeItem::centerPos()
 
 void HyperedgeItem::setLabel(const QString& l)
 {
-    setPlainText(l);
+    setPlainText(QString::fromStdString(edgeId) + "\n" + l);
 }
 
 void HyperedgeItem::updateEdgeItems()
@@ -81,7 +81,7 @@ QVariant HyperedgeItem::itemChange(GraphicsItemChange change,
         {
             QGraphicsItem* child = qvariant_cast<QGraphicsItem*>(value);
             child->setPos(lastPosUsed);
-            lastPosUsed.setY(lastPosUsed.y() + 30.f);
+            lastPosUsed.setY(lastPosUsed.y() + 60.f);
         }
         default:
         {
