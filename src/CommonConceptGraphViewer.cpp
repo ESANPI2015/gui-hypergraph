@@ -145,9 +145,12 @@ void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
     if (!isEnabled())
         return;
 
+    // Make a snapshot of the current graph
+    CommonConceptGraph snapshot(*this->graph());
+
     // Select either instances or classes
-    auto allConcepts = this->graph()->find();
-    auto allInstances = this->graph()->instancesOf(allConcepts);
+    auto allConcepts = snapshot.find();
+    auto allInstances = snapshot.instancesOf(allConcepts);
     auto allClasses   = subtract(allConcepts, allInstances);
 
     if (!mShowClasses)
@@ -170,15 +173,15 @@ void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
     for (auto conceptId : allConcepts)
     {
         // Find children
-        Hyperedges children = this->graph()->childrenOf(Hyperedges{conceptId});
+        Hyperedges children = snapshot.childrenOf(Hyperedges{conceptId});
         children.erase(conceptId);
         childrenOfParent[conceptId] = children;
         // Find parts
-        Hyperedges parts = this->graph()->componentsOf(Hyperedges{conceptId});
+        Hyperedges parts = snapshot.componentsOf(Hyperedges{conceptId});
         parts.erase(conceptId);
         partsOfWhole[conceptId] = parts;
         // Find endpoints
-        Hyperedges endpoints = this->graph()->endpointsOf(Hyperedges{conceptId});
+        Hyperedges endpoints = snapshot.endpointsOf(Hyperedges{conceptId});
         endpoints.erase(conceptId);
         endpointsOfConnector[conceptId] = endpoints;
     }
@@ -186,7 +189,7 @@ void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
     for (auto classId : allClasses)
     {
         // Find superclasses
-        Hyperedges superclasses = this->graph()->subclassesOf(Hyperedges{classId},"",CommonConceptGraph::TraversalDirection::DOWN);
+        Hyperedges superclasses = snapshot.subclassesOf(Hyperedges{classId},"",CommonConceptGraph::TraversalDirection::DOWN);
         superclasses.erase(classId);
         superclassesOf[classId] = superclasses;
     }
@@ -194,7 +197,7 @@ void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
     for (auto instanceId : allInstances)
     {
         // Find superclasses
-        Hyperedges superclasses = this->graph()->instancesOf(Hyperedges{instanceId},"",CommonConceptGraph::TraversalDirection::DOWN);
+        Hyperedges superclasses = snapshot.instancesOf(Hyperedges{instanceId},"",CommonConceptGraph::TraversalDirection::DOWN);
         superclasses.erase(instanceId);
         superclassesOf[instanceId] = superclasses;
     }
@@ -212,16 +215,16 @@ void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
         std::string superclassLabel;
         for (auto superclassId : superclassesOf[conceptId])
         {
-            superclassLabel += (" " + this->graph()->get(superclassId)->label());
+            superclassLabel += (" " + snapshot.get(superclassId)->label());
         }
         if (!currentItems.contains(conceptId))
         {
             // Check if the concept is a class or an instance
             if (allInstances.count(conceptId))
             {
-                item = new CommonConceptGraphItem(this->graph()->get(conceptId), CommonConceptGraphItem::INSTANCE, superclassLabel);
+                item = new CommonConceptGraphItem(snapshot.get(conceptId), CommonConceptGraphItem::INSTANCE, superclassLabel);
             } else {
-                item = new CommonConceptGraphItem(this->graph()->get(conceptId), CommonConceptGraphItem::CLASS, superclassLabel);
+                item = new CommonConceptGraphItem(snapshot.get(conceptId), CommonConceptGraphItem::CLASS, superclassLabel);
             }
             item->setPos(qrand() % dim - dim/2, qrand() % dim - dim/2);
             addItem(item);
@@ -230,7 +233,7 @@ void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
             item = dynamic_cast<CommonConceptGraphItem*>(currentItems[conceptId]);
         }
         // Make sure that the labels are up-to-date
-        item->setLabel(QString::fromStdString(this->graph()->get(conceptId)->label()), QString::fromStdString(superclassLabel));
+        item->setLabel(QString::fromStdString(snapshot.get(conceptId)->label()), QString::fromStdString(superclassLabel));
         validItems[conceptId] = item;
     }
 
