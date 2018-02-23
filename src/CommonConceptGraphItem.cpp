@@ -74,7 +74,7 @@ void CommonConceptGraphEdgeItem::paint(QPainter *painter, const QStyleOptionGrap
     float len_sqr = delta.x() * delta.x() + delta.y() * delta.y();
     if (!(len_sqr > 0.f))
         return;
-    float len = qSqrt(len_sqr);
+    //float len = qSqrt(len_sqr);
 
     QPainterPath path;
     path.moveTo(start);

@@ -429,10 +429,11 @@ void HypergraphView::wheelEvent(QWheelEvent *event)
 
 void HypergraphView::scaleView(qreal scaleFactor)
 {
-    qreal factor = transform()
-                       .scale(scaleFactor, scaleFactor)
-                       .mapRect(QRectF(0, 0, 1, 1))
-                       .width();
+    //qreal factor = transform()
+    transform()
+    .scale(scaleFactor, scaleFactor)
+    .mapRect(QRectF(0, 0, 1, 1))
+    .width();
     //if(factor < 0.07 || factor > 100)
     //{
     //    return;
