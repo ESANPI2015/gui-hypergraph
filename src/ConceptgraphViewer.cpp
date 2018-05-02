@@ -148,6 +148,11 @@ void ConceptgraphScene::visualize(Conceptgraph* graph)
     QMap<UniqueId,ConceptgraphItem*> validItems;
     for (auto relId : allRelations)
     {
+        // Skip basic models
+        if (relId == Conceptgraph::IsConceptId)
+            continue;
+        if (relId == Conceptgraph::IsRelationId)
+            continue;
         // Create or get item
         ConceptgraphItem *item;
         if (!currentItems.contains(relId))
@@ -298,7 +303,7 @@ void ConceptgraphEditor::keyPressEvent(QKeyEvent * event)
     }
     else if (event->key() == Qt::Key_Insert)
     {
-        scene()->addConcept(0, "Name?");
+        scene()->addConcept("URI?", "Name?");
     }
     else if (event->key() == Qt::Key_Pause)
     {
@@ -369,8 +374,7 @@ void ConceptgraphEditor::mouseReleaseEvent(QMouseEvent* event)
         if (edge)
         {
             // Add model edge
-            //std::cout << "Create relation\n";
-            scene()->addRelation(sourceItem->getHyperEdgeId(), edge->getHyperEdgeId(), 0, "Name?");
+            scene()->addRelation(sourceItem->getHyperEdgeId(), edge->getHyperEdgeId(), "URI?", "Name?");
         }
         if (lineItem)
         {
