@@ -59,7 +59,7 @@ class HypergraphScene : public QGraphicsScene
         virtual void setEquilibriumDistance(qreal distance) {}
 
         // Slots to modify the underlying hyperedge system
-        void addEdge(const QString& label="");
+        void addEdge(const UniqueId id, const QString& label="");
         void removeEdge(const UniqueId id);
         void connectEdges(const UniqueId fromId, const UniqueId id, const UniqueId toId);
         void updateEdge(const UniqueId id, const QString& label);

@@ -6,6 +6,7 @@
 #include <QWheelEvent>
 #include <QTimer>
 #include <QtCore>
+#include <QInputDialog>
 
 #include "Hyperedge.hpp"
 #include "Hypergraph.hpp"
@@ -71,11 +72,11 @@ void HypergraphScene::removeItem(QGraphicsItem *item)
     QGraphicsScene::removeItem(item);
 }
 
-void HypergraphScene::addEdge(const QString& label)
+void HypergraphScene::addEdge(const UniqueId id, const QString& label)
 {
     if (currentGraph)
     {
-        currentGraph->create(label.toStdString());
+        currentGraph->create(id, label.toStdString());
         visualize();
     }
 }
@@ -93,8 +94,10 @@ void HypergraphScene::connectEdges(const UniqueId fromId, const UniqueId id, con
 {
     if (currentGraph)
     {
-        currentGraph->from(Hyperedges{fromId}, Hyperedges{id});
-        currentGraph->to(Hyperedges{id}, Hyperedges{toId});
+        if (!fromId.empty())
+            currentGraph->from(Hyperedges{fromId}, Hyperedges{id});
+        if (!toId.empty())
+            currentGraph->to(Hyperedges{id}, Hyperedges{toId});
         visualize();
     }
 }
@@ -500,7 +503,13 @@ void HypergraphEdit::keyPressEvent(QKeyEvent * event)
     }
     else if (event->key() == Qt::Key_Insert)
     {
-        scene()->addEdge(currentLabel);
+        // Ask for URI
+        bool ok;
+        QString uri = QInputDialog::getText(this, tr("New Hyperedge"), tr("Unqiue Identifier:"), QLineEdit::Normal, tr("domain::type::subtype"), &ok);
+        if (ok && !uri.isEmpty())
+        {
+            scene()->addEdge(uri.toStdString(), currentLabel);
+        }
     }
     else if (event->key() == Qt::Key_Pause)
     {
@@ -580,9 +589,19 @@ void HypergraphEdit::mouseReleaseEvent(QMouseEvent* event)
         auto edge = dynamic_cast<HyperedgeItem*>(item);
         if (edge)
         {
-            // Add model edge
-            //scene()->connectEdges(sourceItem->getHyperEdgeId(), edge->getHyperEdgeId());
-            // TODO: Connect via DIALOG or buttons
+            // Ask for Direction
+            bool ok;
+            QStringList items;
+            items << tr("Points To") << tr("Points From");
+            QString direction = QInputDialog::getItem(this, tr("New Link"), tr("Direction:"), items, 0, false, &ok);
+            if (ok && !direction.isEmpty())
+            {
+                // Add model edge
+                if (direction == tr("Points To")) 
+                    scene()->connectEdges("", sourceItem->getHyperEdgeId(), edge->getHyperEdgeId());
+                else
+                    scene()->connectEdges(edge->getHyperEdgeId(), sourceItem->getHyperEdgeId(), "");
+            }
         }
         if (lineItem)
         {
