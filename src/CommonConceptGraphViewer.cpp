@@ -7,6 +7,7 @@
 #include <QWheelEvent>
 #include <QTimer>
 #include <QtCore>
+#include <QInputDialog>
 
 #include "Hypergraph.hpp"
 #include "Conceptgraph.hpp"
@@ -48,7 +49,10 @@ void CommonConceptGraphScene::addItem(QGraphicsItem *item)
     CommonConceptGraphItem *edge = dynamic_cast<CommonConceptGraphItem*>(item);
     if (edge)
     {
-        emit conceptAdded(edge->getHyperEdgeId());
+        if (edge->getType() == CommonConceptGraphItem::CommonConceptGraphItemType::INSTANCE)
+            emit instanceAdded(edge->getHyperEdgeId());
+        else
+            emit classAdded(edge->getHyperEdgeId());
     }
 }
 
@@ -58,32 +62,63 @@ void CommonConceptGraphScene::removeItem(QGraphicsItem *item)
     CommonConceptGraphItem *edge = dynamic_cast<CommonConceptGraphItem*>(item);
     if (edge)
     {
-        emit conceptRemoved(edge->getHyperEdgeId());
+        if (edge->getType() == CommonConceptGraphItem::CommonConceptGraphItemType::INSTANCE)
+            emit instanceRemoved(edge->getHyperEdgeId());
+        else
+            emit classRemoved(edge->getHyperEdgeId());
     }
 
     ConceptgraphScene::removeItem(item);
 }
 
-void CommonConceptGraphScene::addConcept(const UniqueId id, const QString& label)
+void CommonConceptGraphScene::addInstance(const UniqueId superId, const QString& label)
 {
-    //CommonConceptGraph *g = graph();
-    //if (g)
-    //{
-    //    UniqueId theId = id > 0 ? id : qHash(label);
-    //    while (g->create(theId, label.toStdString()).empty()) theId++;
-    //    visualize();
-    //}
+    CommonConceptGraph *g = graph();
+    if (g)
+    {
+        g->instantiateFrom(superId, label.toStdString());
+        visualize();
+    }
 }
 
-void CommonConceptGraphScene::addRelation(const UniqueId fromId, const UniqueId toId, const UniqueId id, const QString& label)
+void CommonConceptGraphScene::addClass(const UniqueId id, const QString& label)
 {
-    //CommonConceptGraph *g = graph();
-    //if (g)
-    //{
-    //    UniqueId theId = id > 0 ? id : qHash(label);
-    //    while (g->relate(theId, fromId, toId, label.toStdString()).empty()) theId++;
-    //    visualize();
-    //}
+    CommonConceptGraph *g = graph();
+    if (g)
+    {
+        g->create(id, label.toStdString());
+        visualize();
+    }
+}
+
+void CommonConceptGraphScene::addRelationIsA(const UniqueId fromId, const UniqueId toId)
+{
+    CommonConceptGraph *g = graph();
+    if (g)
+    {
+        g->isA(Hyperedges{fromId}, Hyperedges{toId});
+        visualize();
+    }
+}
+
+void CommonConceptGraphScene::addRelationHasA(const UniqueId fromId, const UniqueId toId)
+{
+    CommonConceptGraph *g = graph();
+    if (g)
+    {
+        g->hasA(Hyperedges{fromId}, Hyperedges{toId});
+        visualize();
+    }
+}
+
+void CommonConceptGraphScene::addRelationConnects(const UniqueId fromId, const UniqueId toId)
+{
+    CommonConceptGraph *g = graph();
+    if (g)
+    {
+        g->connects(Hyperedges{fromId}, Hyperedges{toId});
+        visualize();
+    }
 }
 
 void CommonConceptGraphScene::removeEdge(const UniqueId id)
@@ -417,7 +452,30 @@ void CommonConceptGraphEditor::keyPressEvent(QKeyEvent * event)
     }
     else if (event->key() == Qt::Key_Insert)
     {
-        scene()->addConcept(0, "Name?");
+        // First question: CLASS or INSTANCE?
+        bool ok;
+        QStringList items;
+        items << tr("INSTANCE") << tr("CLASS");
+        QString which = QInputDialog::getItem(this, tr("New Concept"), tr("Select if it is a"), items, 0, false, &ok);
+        if (ok && !which.isEmpty())
+        {
+            if (which == tr("INSTANCE"))
+            {
+                // Instance! Ask for class.
+                QString classUid = QInputDialog::getText(this, tr("New Instance"), tr("Class Unqiue Identifier:"), QLineEdit::Normal, tr("SomeClassUID"), &ok);
+                if (ok && !classUid.isEmpty())
+                {
+                    scene()->addInstance(classUid.toStdString(), currentLabel);
+                }
+            } else {
+                // Class! Ask for UID
+                QString classUid = QInputDialog::getText(this, tr("New Class"), tr("Unqiue Identifier:"), QLineEdit::Normal, tr("SomeUID"), &ok);
+                if (ok && !classUid.isEmpty())
+                {
+                    scene()->addClass(classUid.toStdString(), currentLabel);
+                }
+            }
+        }
     }
     else if (event->key() == Qt::Key_Pause)
     {
@@ -497,9 +555,20 @@ void CommonConceptGraphEditor::mouseReleaseEvent(QMouseEvent* event)
         auto edge = dynamic_cast<CommonConceptGraphItem*>(item);
         if (edge)
         {
-            // Add model edge
-            //std::cout << "Create relation\n";
-            scene()->addRelation(sourceItem->getHyperEdgeId(), edge->getHyperEdgeId(), 0, "Name?");
+            // First question: Which relation?
+            bool ok;
+            QStringList items;
+            items << tr("IS A") << tr("HAS A") << tr("CONNECTS");
+            QString which = QInputDialog::getItem(this, tr("New Relation"), tr("Type:"), items, 0, false, &ok);
+            if (ok && !which.isEmpty())
+            {
+                if (which == tr("IS A"))
+                    scene()->addRelationIsA(sourceItem->getHyperEdgeId(), edge->getHyperEdgeId());
+                else if (which == tr("HAS A"))
+                    scene()->addRelationHasA(sourceItem->getHyperEdgeId(), edge->getHyperEdgeId());
+                else
+                    scene()->addRelationConnects(sourceItem->getHyperEdgeId(), edge->getHyperEdgeId());
+            }
         }
         if (lineItem)
         {
@@ -535,8 +604,10 @@ CommonConceptGraphWidget::CommonConceptGraphWidget(QWidget *parent, bool doSetup
         mpNewUi->usageLabel->setText("LMB: Select  WHEEL: Zoom  DEL: Delete  PAUSE: Toggle Layouting  F1: Hide/Show Classes  F2: Hide/Show Instances");
 
         // Connect
-        connect(mpCommonConceptScene, SIGNAL(conceptAdded(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
-        connect(mpCommonConceptScene, SIGNAL(conceptRemoved(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
+        connect(mpCommonConceptScene, SIGNAL(instanceAdded(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
+        connect(mpCommonConceptScene, SIGNAL(classAdded(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
+        connect(mpCommonConceptScene, SIGNAL(instanceRemoved(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
+        connect(mpCommonConceptScene, SIGNAL(classRemoved(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
         connect(mpCommonConceptScene, SIGNAL(relationAdded(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
         connect(mpCommonConceptScene, SIGNAL(relationRemoved(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
     } else {

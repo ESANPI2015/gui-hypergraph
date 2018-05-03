@@ -31,15 +31,21 @@ class CommonConceptGraphScene : public ConceptgraphScene
         bool instancesShown() { return mShowInstances; }
 
     signals:
-        void conceptAdded(const UniqueId id);
-        void conceptRemoved(const UniqueId id);
-    //    void relationAdded(const UniqueId id);
-    //    void relationRemoved(const UniqueId id);
+        void classAdded(const UniqueId id);
+        void classRemoved(const UniqueId id);
+        void instanceAdded(const UniqueId id);
+        void instanceRemoved(const UniqueId id);
+        void relationAdded(const UniqueId id);
+        void relationRemoved(const UniqueId id);
 
     public slots:
         void visualize(CommonConceptGraph* graph=NULL);
-        void addConcept(const UniqueId id, const QString& label);
-        void addRelation(const UniqueId fromId, const UniqueId toId, const UniqueId id, const QString& label);
+        void addInstance(const UniqueId superId, const QString& label);
+        void addClass(const UniqueId id, const QString& label);
+        void addRelationIsA(const UniqueId fromId, const UniqueId toId);
+        void addRelationHasA(const UniqueId fromId, const UniqueId toId);
+        void addRelationConnects(const UniqueId fromId, const UniqueId toId);
+        //void addRelationPartOf(const UniqueId fromId, const UniqueId toId);
         void removeEdge(const UniqueId id);
         void updateEdge(const UniqueId id, const QString& label);
         void showClasses(const bool value);
