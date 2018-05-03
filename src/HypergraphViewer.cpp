@@ -574,7 +574,7 @@ void HypergraphEdit::mouseMoveEvent(QMouseEvent* event)
     // When in DRAW_LINE mode, update temporary visual line
     if (isDrawLineMode)
     {
-        lineItem->setLine(sourceItem->pos().x(), sourceItem->pos().y(), mapToScene(event->pos()).x(), mapToScene(event->pos()).y());
+        lineItem->setLine(sourceItem->scenePos().x(), sourceItem->scenePos().y(), mapToScene(event->pos()).x(), mapToScene(event->pos()).y());
     }
 
     QGraphicsView::mouseMoveEvent(event);
