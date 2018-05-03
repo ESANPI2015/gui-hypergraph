@@ -6,6 +6,7 @@
 #include <QWheelEvent>
 #include <QTimer>
 #include <QtCore>
+#include <QInputDialog>
 
 #include "Hypergraph.hpp"
 #include "Conceptgraph.hpp"
@@ -85,9 +86,9 @@ void ConceptgraphScene::addRelation(const UniqueId fromId, const UniqueId toId, 
     if (g)
     {
         if (id.empty())
-            g->relate(Hyperedges{toId}, Hyperedges{fromId}, label.toStdString());
+            g->relate(Hyperedges{fromId}, Hyperedges{toId}, label.toStdString());
         else
-            g->relate(id, Hyperedges{toId}, Hyperedges{fromId}, label.toStdString());
+            g->relate(id, Hyperedges{fromId}, Hyperedges{toId}, label.toStdString());
         visualize();
     }
 }
@@ -303,7 +304,13 @@ void ConceptgraphEditor::keyPressEvent(QKeyEvent * event)
     }
     else if (event->key() == Qt::Key_Insert)
     {
-        scene()->addConcept("URI?", "Name?");
+        // Ask for URI
+        bool ok;
+        QString uri = QInputDialog::getText(this, tr("New Concept"), tr("Unqiue Identifier:"), QLineEdit::Normal, tr("domain::type::subtype"), &ok);
+        if (ok && !uri.isEmpty())
+        {
+            scene()->addConcept(uri.toStdString(), currentLabel);
+        }
     }
     else if (event->key() == Qt::Key_Pause)
     {
@@ -373,8 +380,14 @@ void ConceptgraphEditor::mouseReleaseEvent(QMouseEvent* event)
         auto edge = dynamic_cast<ConceptgraphItem*>(item);
         if (edge)
         {
-            // Add model edge
-            scene()->addRelation(sourceItem->getHyperEdgeId(), edge->getHyperEdgeId(), "URI?", "Name?");
+            // Ask for URI
+            bool ok;
+            QString uri = QInputDialog::getText(this, tr("New Relation"), tr("Unqiue Identifier:"), QLineEdit::Normal, tr("domain::type::subtype"), &ok);
+            if (ok && !uri.isEmpty())
+            {
+                // Add model edge
+                scene()->addRelation(sourceItem->getHyperEdgeId(), edge->getHyperEdgeId(), uri.toStdString(), currentLabel);
+            }
         }
         if (lineItem)
         {
