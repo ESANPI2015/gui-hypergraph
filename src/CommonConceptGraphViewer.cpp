@@ -230,8 +230,7 @@ void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
     int N = allConcepts.size();
     int dim = N * mEquilibriumDistance / 2;
 
-    // Second pass: Draw all instances
-    // FIXME: When toggling to hide classes, the direct superclasses of instances are still in allConcepts? Investigate & fix!
+    // Second pass: Draw either class or instance
     QMap<UniqueId,CommonConceptGraphItem*> validItems;
     for (auto conceptId : allConcepts)
     {
@@ -266,12 +265,18 @@ void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
     // Third pass:
     for (auto conceptId : allConcepts)
     {
+        // Check if valid
+        if (!validItems.contains(conceptId))
+            continue;
         CommonConceptGraphItem *srcItem = dynamic_cast<CommonConceptGraphItem*>(validItems[conceptId]);
         if (!srcItem)
             continue;
         // Every child shall be attached to its parent
         for (auto childId : childrenOfParent[conceptId])
         {
+            // Check if valid
+            if (!validItems.contains(childId))
+                continue;
             // A child is in validItems, currentItems and visible ... But we want it to be part of its parent
             CommonConceptGraphItem *destItem = dynamic_cast<CommonConceptGraphItem*>(validItems[childId]);
             if (!destItem)
@@ -290,6 +295,9 @@ void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
         // Every connector shall be wired to its endpoints
         for (auto endpointId : endpointsOfConnector[conceptId])
         {
+            // Check if valid
+            if (!validItems.contains(endpointId))
+                continue;
             // a connector points to each one of its connectors
             CommonConceptGraphItem *destItem = dynamic_cast<CommonConceptGraphItem*>(validItems[endpointId]);
             if (!destItem)
@@ -317,6 +325,9 @@ void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
         // Every instance/class shall be related to its superclasses
         for (auto superclassId : superclassesOf[conceptId])
         {
+            // Check if valid
+            if (!validItems.contains(superclassId))
+                continue;
             // a connector points to each one of its connectors
             CommonConceptGraphItem *destItem = dynamic_cast<CommonConceptGraphItem*>(validItems[superclassId]);
             if (!destItem)
@@ -350,6 +361,9 @@ void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
         // Every part shall be linked to its container/whole
         for (auto partId : partsOfWhole[conceptId])
         {
+            // Check if valid
+            if (!validItems.contains(partId))
+                continue;
             // a part points to its whole
             CommonConceptGraphItem *destItem = dynamic_cast<CommonConceptGraphItem*>(validItems[partId]);
             if (!destItem)
