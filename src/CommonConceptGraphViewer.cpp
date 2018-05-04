@@ -91,32 +91,22 @@ void CommonConceptGraphScene::addClass(const UniqueId id, const QString& label)
     }
 }
 
-void CommonConceptGraphScene::addRelationIsA(const UniqueId fromId, const UniqueId toId)
+void CommonConceptGraphScene::addFact(const UniqueId superId, const UniqueId fromId, const UniqueId toId)
 {
     CommonConceptGraph *g = graph();
     if (g)
     {
-        g->isA(Hyperedges{fromId}, Hyperedges{toId});
+        g->factFrom(Hyperedges{fromId}, Hyperedges{toId}, superId);
         visualize();
     }
 }
 
-void CommonConceptGraphScene::addRelationHasA(const UniqueId fromId, const UniqueId toId)
+void CommonConceptGraphScene::addRelation(const UniqueId id, const UniqueId fromId, const UniqueId toId, const QString& label)
 {
     CommonConceptGraph *g = graph();
     if (g)
     {
-        g->hasA(Hyperedges{fromId}, Hyperedges{toId});
-        visualize();
-    }
-}
-
-void CommonConceptGraphScene::addRelationConnects(const UniqueId fromId, const UniqueId toId)
-{
-    CommonConceptGraph *g = graph();
-    if (g)
-    {
-        g->connects(Hyperedges{fromId}, Hyperedges{toId});
+        g->relate(id, Hyperedges{fromId}, Hyperedges{toId}, label.toStdString());
         visualize();
     }
 }
@@ -241,6 +231,7 @@ void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
     int dim = N * mEquilibriumDistance / 2;
 
     // Second pass: Draw all instances
+    // FIXME: When toggling to hide classes, the direct superclasses of instances are still in allConcepts? Investigate & fix!
     QMap<UniqueId,CommonConceptGraphItem*> validItems;
     for (auto conceptId : allConcepts)
     {
@@ -562,19 +553,29 @@ void CommonConceptGraphEditor::mouseReleaseEvent(QMouseEvent* event)
         auto edge = dynamic_cast<CommonConceptGraphItem*>(item);
         if (edge)
         {
-            // First question: Which relation?
+            // First question: RELATION DEF or FACT
             bool ok;
             QStringList items;
-            items << tr("IS A") << tr("HAS A") << tr("CONNECTS");
-            QString which = QInputDialog::getItem(this, tr("New Relation"), tr("Type:"), items, 0, false, &ok);
+            items << tr("FACT") << tr("RELATION DEF");
+            QString which = QInputDialog::getItem(this, tr("New Relation"), tr("Select if it is a"), items, 0, false, &ok);
             if (ok && !which.isEmpty())
             {
-                if (which == tr("IS A"))
-                    scene()->addRelationIsA(sourceItem->getHyperEdgeId(), edge->getHyperEdgeId());
-                else if (which == tr("HAS A"))
-                    scene()->addRelationHasA(sourceItem->getHyperEdgeId(), edge->getHyperEdgeId());
-                else
-                    scene()->addRelationConnects(sourceItem->getHyperEdgeId(), edge->getHyperEdgeId());
+                if (which == tr("FACT"))
+                {
+                    // FACT! Ask for class.
+                    QString classUid = QInputDialog::getText(this, tr("New Fact"), tr("Relation Unqiue Identifier:"), QLineEdit::Normal, tr("SomeRelationUID"), &ok);
+                    if (ok && !classUid.isEmpty())
+                    {
+                        scene()->addFact(classUid.toStdString(), sourceItem->getHyperEdgeId(), edge->getHyperEdgeId());
+                    }
+                } else {
+                    // RELATION DEF! Ask for UID
+                    QString classUid = QInputDialog::getText(this, tr("New Relation Definition"), tr("Unqiue Identifier:"), QLineEdit::Normal, tr("SomeUID"), &ok);
+                    if (ok && !classUid.isEmpty())
+                    {
+                        scene()->addRelation(classUid.toStdString(), sourceItem->getHyperEdgeId(), edge->getHyperEdgeId(), currentLabel);
+                    }
+                }
             }
         }
         if (lineItem)

@@ -42,10 +42,8 @@ class CommonConceptGraphScene : public ConceptgraphScene
         void visualize(CommonConceptGraph* graph=NULL);
         void addInstance(const UniqueId superId, const QString& label);
         void addClass(const UniqueId id, const QString& label);
-        void addRelationIsA(const UniqueId fromId, const UniqueId toId);
-        void addRelationHasA(const UniqueId fromId, const UniqueId toId);
-        void addRelationConnects(const UniqueId fromId, const UniqueId toId);
-        //void addRelationPartOf(const UniqueId fromId, const UniqueId toId);
+        void addFact(const UniqueId superId, const UniqueId fromId, const UniqueId toId);
+        void addRelation(const UniqueId id, const UniqueId fromId, const UniqueId toId, const QString& label);
         void removeEdge(const UniqueId id);
         void updateEdge(const UniqueId id, const QString& label);
         void showClasses(const bool value);
