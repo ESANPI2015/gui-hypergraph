@@ -316,6 +316,37 @@ void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
             // Omit loops
             if (srcItem == destItem)
                 continue;
+            // Check if there is an edgeitem of type TO which points to destItem
+            bool found = false;
+            auto myEdgeItems = srcItem->getEdgeItems();
+            for (auto line : myEdgeItems)
+            {
+                if (line->getTargetItem() == destItem)
+                {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+            {
+                // srcItem/parent -- HAS-A --> destItem/child
+                auto line = new CommonConceptGraphEdgeItem(srcItem, destItem, CommonConceptGraphEdgeItem::TO, CommonConceptGraphEdgeItem::DOTTED_STRAIGHT);
+                addItem(line);
+            }
+        }
+        // Every part shall be linked to its container/whole
+        for (auto partId : partsOfWhole[conceptId])
+        {
+            // Check if valid
+            if (!validItems.contains(partId))
+                continue;
+            // a part points to its whole
+            CommonConceptGraphItem *destItem = dynamic_cast<CommonConceptGraphItem*>(validItems[partId]);
+            if (!destItem)
+                continue;
+            // Omit loops
+            if (srcItem == destItem)
+                continue;
             // Check if this item is already part of the parent
             if (!srcItem->isAncestorOf(destItem))
             {
@@ -390,37 +421,6 @@ void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
                 addItem(line);
             }
         }
-        // Every part shall be linked to its container/whole
-        for (auto partId : partsOfWhole[conceptId])
-        {
-            // Check if valid
-            if (!validItems.contains(partId))
-                continue;
-            // a part points to its whole
-            CommonConceptGraphItem *destItem = dynamic_cast<CommonConceptGraphItem*>(validItems[partId]);
-            if (!destItem)
-                continue;
-            // Omit loops
-            if (srcItem == destItem)
-                continue;
-            // Check if there is an edgeitem of type TO which points to destItem
-            bool found = false;
-            auto myEdgeItems = srcItem->getEdgeItems();
-            for (auto line : myEdgeItems)
-            {
-                if (line->getTargetItem() == destItem)
-                {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found)
-            {
-                // PART-OF is the other way around destItem -- PART-OF --> srcItem!
-                auto line = new CommonConceptGraphEdgeItem(destItem, srcItem, CommonConceptGraphEdgeItem::TO, CommonConceptGraphEdgeItem::DOTTED_STRAIGHT);
-                addItem(line);
-            }
-        }
     }
 
     // Everything which is in currentItems but not in validItems has to be removed
@@ -467,8 +467,7 @@ void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
         auto item = it2.value();
         // Destruct the item
         currentItems.remove(id);
-        //delete item;
-        //removeItem(item);
+        removeItem(item);
         item->deleteLater();
     }
 }
