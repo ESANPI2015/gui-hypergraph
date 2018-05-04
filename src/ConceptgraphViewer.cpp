@@ -275,9 +275,8 @@ void ConceptgraphScene::visualize(Conceptgraph* graph)
             continue;
         auto item = it2.value();
         currentItems.remove(id);
-        //delete item;
         removeItem(item);
-        item->deleteLater();
+        delete item;
     }
 }
 
