@@ -143,6 +143,38 @@ void CommonConceptGraphScene::showInstances(const bool value)
     visualize();
 }
 
+QStringList CommonConceptGraphScene::getAllClassUIDs()
+{
+    QStringList result;
+    Hyperedges allClasses;
+    CommonConceptGraph *g = graph();
+    if (g)
+    {
+        Hyperedges allConcepts = g->find();
+        Hyperedges allInstances = g->instancesOf(allConcepts);
+        allClasses = subtract(allConcepts, allInstances);
+    }
+    for (UniqueId classUID : allClasses)
+        result.push_back(QString::fromStdString(classUID));
+    return result;
+}
+
+QStringList CommonConceptGraphScene::getAllRelationUIDs()
+{
+    QStringList result;
+    Hyperedges allRelClasses;
+    CommonConceptGraph *g = graph();
+    if (g)
+    {
+        Hyperedges allRelations = g->relations();
+        Hyperedges allFacts = g->factsOf(allRelations);
+        allRelClasses = subtract(allRelations, allFacts);
+    }
+    for (UniqueId classUID : allRelClasses)
+        result.push_back(QString::fromStdString(classUID));
+    return result;
+}
+
 void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
 {
     // If a new graph is given, ...
@@ -474,7 +506,9 @@ void CommonConceptGraphEditor::keyPressEvent(QKeyEvent * event)
             if (which == tr("INSTANCE"))
             {
                 // Instance! Ask for class.
-                QString classUid = QInputDialog::getText(this, tr("New Instance"), tr("Class Unqiue Identifier:"), QLineEdit::Normal, tr("SomeClassUID"), &ok);
+                items.clear();
+                items = scene()->getAllClassUIDs();
+                QString classUid = QInputDialog::getItem(this, tr("New Instance"), tr("Of class:"), items, 0, false, &ok);
                 if (ok && !classUid.isEmpty())
                 {
                     scene()->addInstance(classUid.toStdString(), currentLabel);
@@ -577,7 +611,9 @@ void CommonConceptGraphEditor::mouseReleaseEvent(QMouseEvent* event)
                 if (which == tr("FACT"))
                 {
                     // FACT! Ask for class.
-                    QString classUid = QInputDialog::getText(this, tr("New Fact"), tr("Relation Unqiue Identifier:"), QLineEdit::Normal, tr("SomeRelationUID"), &ok);
+                    items.clear();
+                    items = scene()->getAllRelationUIDs();
+                    QString classUid = QInputDialog::getItem(this, tr("New Fact"), tr("Of relation:"), items, 0, false, &ok);
                     if (ok && !classUid.isEmpty())
                     {
                         scene()->addFact(classUid.toStdString(), sourceItem->getHyperEdgeId(), edge->getHyperEdgeId());
@@ -587,7 +623,7 @@ void CommonConceptGraphEditor::mouseReleaseEvent(QMouseEvent* event)
                     QString classUid = QInputDialog::getText(this, tr("New Relation Definition"), tr("Unqiue Identifier:"), QLineEdit::Normal, tr("SomeUID"), &ok);
                     if (ok && !classUid.isEmpty())
                     {
-                        scene()->addRelation(classUid.toStdString(), sourceItem->getHyperEdgeId(), edge->getHyperEdgeId(), currentLabel);
+                        scene()->addRelation(classUid.toStdString(), sourceItem->getHyperEdgeId(), edge->getHyperEdgeId(), classUid);
                     }
                 }
             }

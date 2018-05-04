@@ -29,6 +29,8 @@ class CommonConceptGraphScene : public ConceptgraphScene
         QList<CommonConceptGraphItem*> selectedCommonConceptGraphItems();
         bool classesShown() { return mShowClasses; }
         bool instancesShown() { return mShowInstances; }
+        QStringList getAllClassUIDs();
+        QStringList getAllRelationUIDs();
 
     signals:
         void classAdded(const UniqueId id);
