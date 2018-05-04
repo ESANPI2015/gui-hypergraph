@@ -70,6 +70,9 @@ class EdgeItem : public QGraphicsItem
         // This is called whenever this item has to change
         void adjust();
 
+        // Call this to adjust the Z Value to be one less than the maximum value
+        void findProperZ();
+
         // Deregisters from HyperedgeItems
         void deregister();
 

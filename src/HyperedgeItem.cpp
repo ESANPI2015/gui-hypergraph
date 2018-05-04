@@ -15,7 +15,7 @@ HyperedgeItem::HyperedgeItem(Hyperedge *edge)
     setFlag(ItemIsSelectable);
     setFlag(ItemSendsScenePositionChanges);
     setVisible(true);
-    setZValue(1);
+    setZValue(qrand());
     setPlainText(QString::fromStdString(edge->label()));
     lastPosUsed = QPointF(0.f,60.f);
 }
@@ -126,6 +126,8 @@ void EdgeItem::deregister()
 {
     mpSourceEdge->deregisterEdgeItem(this);
     mpTargetEdge->deregisterEdgeItem(this);
+    mpSourceEdge = NULL;
+    mpTargetEdge = NULL;
 }
 
 void EdgeItem::adjust()
@@ -133,8 +135,18 @@ void EdgeItem::adjust()
     prepareGeometryChange();
 }
 
+void EdgeItem::findProperZ()
+{
+    if (!mpSourceEdge || !mpTargetEdge)
+        return;
+    qreal minZ(qMin(mpSourceEdge->zValue(), mpTargetEdge->zValue()));
+    setZValue(minZ-0.1f);
+}
+
 QRectF EdgeItem::boundingRect() const
 {
+    if (!mpSourceEdge || !mpTargetEdge)
+        return QRectF();
     // NOTE: Just using two points is not OK!
     QPointF a(mpSourceEdge->centerPos());
     QPointF b(mpTargetEdge->centerPos());
@@ -150,6 +162,8 @@ QRectF EdgeItem::boundingRect() const
 void EdgeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
            QWidget *widget)
 {
+    if (!mpSourceEdge || !mpTargetEdge)
+        return;
     QPointF start(mpSourceEdge->centerPos());
     QPointF end(mpTargetEdge->centerPos());
     QPointF delta(end - start); // Points to end!
@@ -174,6 +188,7 @@ void EdgeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
     path.moveTo(start);
     path.cubicTo(c1, c2, end);
     painter->drawPath(path);
+    findProperZ();
     // Decide how to draw circle
     if (mType == TO)
     {

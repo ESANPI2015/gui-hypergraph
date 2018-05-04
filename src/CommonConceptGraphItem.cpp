@@ -112,4 +112,5 @@ void CommonConceptGraphEdgeItem::paint(QPainter *painter, const QStyleOptionGrap
             break;
     }
     painter->drawPath(path);
+    findProperZ();
 }
