@@ -291,7 +291,9 @@ void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
             // Check if this item is already part of the parent
             if (!srcItem->isAncestorOf(destItem))
             {
-                destItem->setParentItem(srcItem);
+                // Be sure that destItem does not yet have a parent
+                if (!destItem->parentItem())
+                    destItem->setParentItem(srcItem);
             }
         }
         // Every connector shall be wired to its endpoints
@@ -401,15 +403,20 @@ void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
             edge->deregister();
             delete edge;
         }
+        // If we have a parent, remove ourself from that!!!!
+        if (item->parentItem())
+            item->setParentItem(nullptr);
         // Make all our children free items again!!!
         QList< QGraphicsItem* > children = item->childItems();
         for (QGraphicsItem* child : children)
         {
-            CommonConceptGraphItem* commonChild = dynamic_cast<CommonConceptGraphItem*>(child);
-            if (!commonChild)
-                continue;
-            commonChild->setParentItem(0);
-            commonChild->updateEdgeItems();
+            if (child->parentItem())
+                child->setParentItem(nullptr);
+            // If it is an hyperedge item, try to update edges
+            // FIXME: This triggers a segfault somehow
+            //HyperedgeItem *hedge = dynamic_cast< HyperedgeItem *>(child);
+            //if (hedge)
+            //    hedge->updateEdgeItems();
         }
     }
 
@@ -423,9 +430,9 @@ void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
         auto item = it2.value();
         // Destruct the item
         currentItems.remove(id);
-        delete item;
+        //delete item;
         //removeItem(item);
-        //item->deleteLater();
+        item->deleteLater();
     }
 }
 
