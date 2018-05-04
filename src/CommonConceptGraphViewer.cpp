@@ -424,9 +424,25 @@ void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
     }
 
     // Everything which is in currentItems but not in validItems has to be removed
-    // First: remove edges and free children
+    QList< QGraphicsItem* > toBeDeleted;
+    QList< QGraphicsItem* >::const_iterator dit;
     QMap<UniqueId,HyperedgeItem*> toBeChecked(currentItems); // NOTE: Since we modify currentItems, we should make a snapshot of the current state
     QMap<UniqueId,HyperedgeItem*>::const_iterator it2;
+    // First pass: Remove all children
+    for (it2 = toBeChecked.begin(); it2 != toBeChecked.end(); ++it2)
+    {
+        auto id = it2.key();
+        if (validItems.contains(id))
+            continue;
+        auto item = it2.value();
+        // Check children: Put ownership back to scene
+        QList< QGraphicsItem* > children = item->childItems();
+        for (QGraphicsItem* child : children)
+        {
+            child->setParentItem(0);
+        }
+    }
+    // Third: List items to be removed
     for (it2 = toBeChecked.begin(); it2 != toBeChecked.end(); ++it2)
     {
         auto id = it2.key();
@@ -438,37 +454,19 @@ void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
         for (auto edge : edgeSet)
         {
             edge->deregister();
-            delete edge;
+            toBeDeleted.push_back(edge);
         }
-        // If we have a parent, remove ourself from that!!!!
-        if (item->parentItem())
-            item->setParentItem(nullptr);
-        // Make all our children free items again!!!
-        QList< QGraphicsItem* > children = item->childItems();
-        for (QGraphicsItem* child : children)
-        {
-            if (child->parentItem())
-                child->setParentItem(nullptr);
-            // If it is an hyperedge item, try to update edges
-            // FIXME: This triggers a segfault somehow
-            //HyperedgeItem *hedge = dynamic_cast< HyperedgeItem *>(child);
-            //if (hedge)
-            //    hedge->updateEdgeItems();
-        }
-    }
-
-    // Everything which is in currentItems but not in validItems has to be removed
-    // Second: remove items
-    for (it2 = toBeChecked.begin(); it2 != toBeChecked.end(); ++it2)
-    {
-        auto id = it2.key();
-        if (validItems.contains(id))
-            continue;
-        auto item = it2.value();
         // Destruct the item
         currentItems.remove(id);
-        removeItem(item);
-        item->deleteLater();
+        toBeDeleted.push_back(item);
+        //removeItem(item); // FIXME: Causes SEGFAULT when having child items?
+    }
+
+    // Finally: Delete items
+    for (dit = toBeDeleted.begin(); dit != toBeDeleted.end(); ++dit)
+    {
+        QGraphicsItem* item(*dit);
+        delete item;
     }
 }
 
