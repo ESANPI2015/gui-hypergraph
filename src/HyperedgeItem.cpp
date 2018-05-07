@@ -139,7 +139,9 @@ void EdgeItem::findProperZ()
 {
     if (!mpSourceEdge || !mpTargetEdge)
         return;
-    qreal minZ(qMin(mpSourceEdge->zValue(), mpTargetEdge->zValue()));
+    qreal sourceZ = mpSourceEdge->parentItem() ? mpSourceEdge->parentItem()->zValue() : mpSourceEdge->zValue();
+    qreal targetZ = mpTargetEdge->parentItem() ? mpTargetEdge->parentItem()->zValue() : mpTargetEdge->zValue();
+    qreal minZ(qMin(sourceZ, targetZ));
     setZValue(minZ-0.1f);
 }
 
