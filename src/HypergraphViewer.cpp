@@ -58,6 +58,9 @@ void HypergraphScene::addItem(QGraphicsItem *item)
     {
         emit edgesConnected(conn->getSourceItem()->getHyperEdgeId(), conn->getTargetItem()->getHyperEdgeId());
     }
+
+    // This signal can be used to let the viewport center on that item or to move it to the center of the view
+    emit itemAdded(item);
 }
 
 void HypergraphScene::removeItem(QGraphicsItem *item)
@@ -637,6 +640,8 @@ HypergraphViewer::HypergraphViewer(QWidget *parent, bool doSetup)
         mpUi->View->setLayout(layout);
 
         mpUi->usageLabel->setText("LMB: Select  RMB: Associate  WHEEL: Zoom  DEL: Delete  INS: Insert  PAUSE: Toggle Layouting");
+
+        connect(mpScene, SIGNAL(itemAdded(const QGraphicsItem*)), this, SLOT(onGraphChanged(const QGraphicsItem*)));
     } else {
         mpUi = NULL;
         mpScene = NULL;
@@ -698,6 +703,17 @@ void HypergraphViewer::storeToYAML()
         result << node;
         emit YAMLStringReady(QString::fromStdString(result.str()));
     }
+}
+
+void HypergraphViewer::onGraphChanged(const UniqueId id)
+{
+    // update stats
+    mpUi->statsLabel->setText("HE: " + QString::number(mpScene->graph()->find().size()));
+}
+
+void HypergraphViewer::onGraphChanged(const QGraphicsItem* item)
+{
+    mpView->centerOn(item);
 }
 
 void HypergraphViewer::clearHypergraph()
