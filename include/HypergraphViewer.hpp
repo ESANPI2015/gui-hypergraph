@@ -47,7 +47,7 @@ class HypergraphScene : public QGraphicsScene
         void edgeAdded(const UniqueId id);
         void edgeRemoved(const UniqueId id);
         void edgesConnected(const UniqueId fromId, const UniqueId toId);
-        void itemAdded(const QGraphicsItem *item);
+        void itemAdded(QGraphicsItem *item);
 
     public slots:
         // This is the constructing function of the hyperedge scene
@@ -183,7 +183,7 @@ class HypergraphViewer : public QWidget
         void setEquilibriumDistance(qreal distance);
         // A slot which can be called whenever the graph has changed
         void onGraphChanged(const UniqueId id);
-        void onGraphChanged(const QGraphicsItem* item);
+        void onGraphChanged(QGraphicsItem* item);
 
     protected:
         // Triggered when widget is about to get visible

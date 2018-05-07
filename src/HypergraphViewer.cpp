@@ -154,7 +154,6 @@ void HypergraphScene::visualize(Hypergraph* graph)
         if (!currentItems.contains(x->id()))
         {
             item = new HyperedgeItem(x);
-            item->setPos(qrand() % 2000 - 1000, qrand() % 2000 - 1000);
             addItem(item);
             currentItems[x->id()] = item;
         } else {
@@ -641,7 +640,7 @@ HypergraphViewer::HypergraphViewer(QWidget *parent, bool doSetup)
 
         mpUi->usageLabel->setText("LMB: Select  RMB: Associate  WHEEL: Zoom  DEL: Delete  INS: Insert  PAUSE: Toggle Layouting");
 
-        connect(mpScene, SIGNAL(itemAdded(const QGraphicsItem*)), this, SLOT(onGraphChanged(const QGraphicsItem*)));
+        connect(mpScene, SIGNAL(itemAdded(QGraphicsItem*)), this, SLOT(onGraphChanged(QGraphicsItem*)));
     } else {
         mpUi = NULL;
         mpScene = NULL;
@@ -711,9 +710,15 @@ void HypergraphViewer::onGraphChanged(const UniqueId id)
     mpUi->statsLabel->setText("HE: " + QString::number(mpScene->graph()->find().size()));
 }
 
-void HypergraphViewer::onGraphChanged(const QGraphicsItem* item)
+void HypergraphViewer::onGraphChanged(QGraphicsItem* item)
 {
-    mpView->centerOn(item);
+    HyperedgeItem *hitem(dynamic_cast< HyperedgeItem *>(item));
+    if (!hitem)
+        return;
+    // Get current scene pos of view
+    QPointF centerOfView(mpView->mapToScene(mpView->viewport()->rect().center()));
+    QPointF noise(qrand() % 100 - 50, qrand() % 100 - 50);
+    item->setPos(centerOfView + noise);
 }
 
 void HypergraphViewer::clearHypergraph()

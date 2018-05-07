@@ -68,6 +68,7 @@ class ConceptgraphWidget : public HypergraphViewer
         void loadFromYAML(const QString& yamlString);
         void loadFromGraph(Conceptgraph& graph);
         void onGraphChanged(const UniqueId id);
+        void onGraphChanged(QGraphicsItem* item);
 
     protected:
         // Triggered when widget is about to get visible

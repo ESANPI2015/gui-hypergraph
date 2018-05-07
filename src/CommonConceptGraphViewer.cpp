@@ -259,9 +259,6 @@ void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
         superclassesOf[instanceId] = superclasses;
     }
 
-    int N = allConcepts.size();
-    int dim = N * mEquilibriumDistance / 2;
-
     // Second pass: Draw either class or instance
     QMap<UniqueId,CommonConceptGraphItem*> validItems;
     for (auto conceptId : allConcepts)
@@ -283,7 +280,6 @@ void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
             } else {
                 item = new CommonConceptGraphItem(snapshot.get(conceptId), CommonConceptGraphItem::CLASS, superclassLabel);
             }
-            item->setPos(qrand() % dim - dim/2, qrand() % dim - dim/2);
             addItem(item);
             currentItems[conceptId] = item;
         } else {
@@ -659,6 +655,7 @@ CommonConceptGraphWidget::CommonConceptGraphWidget(QWidget *parent, bool doSetup
         mpNewUi->usageLabel->setText("LMB: Select  WHEEL: Zoom  DEL: Delete  PAUSE: Toggle Layouting  F1: Hide/Show Classes  F2: Hide/Show Instances");
 
         // Connect
+        connect(mpCommonConceptScene, SIGNAL(itemAdded(QGraphicsItem*)), this, SLOT(onGraphChanged(QGraphicsItem*)));
         connect(mpCommonConceptScene, SIGNAL(instanceAdded(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
         connect(mpCommonConceptScene, SIGNAL(classAdded(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
         connect(mpCommonConceptScene, SIGNAL(instanceRemoved(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
@@ -704,6 +701,17 @@ void CommonConceptGraphWidget::loadFromYAML(const QString& yamlString)
     CommonConceptGraph newCCGraph(newCGraph);
     loadFromGraph(newCCGraph);
     delete newGraph;
+}
+
+void CommonConceptGraphWidget::onGraphChanged(QGraphicsItem* item)
+{
+    HyperedgeItem *hitem(dynamic_cast< HyperedgeItem *>(item));
+    if (!hitem)
+        return;
+    // Get current scene pos of view
+    QPointF centerOfView(mpCommonConceptEditor->mapToScene(mpCommonConceptEditor->viewport()->rect().center()));
+    QPointF noise(qrand() % 100 - 50, qrand() % 100 - 50);
+    item->setPos(centerOfView + noise);
 }
 
 void CommonConceptGraphWidget::onGraphChanged(const UniqueId id)

@@ -142,8 +142,6 @@ void ConceptgraphScene::visualize(Conceptgraph* graph)
     // Now get all edges of the graph
     auto allConcepts = this->graph()->find();
     auto allRelations = this->graph()->relations();
-    int N = allConcepts.size() + allRelations.size();
-    int dim = N * mEquilibriumDistance / 2;
 
     // Then we go through all edges and check if we already have an ConceptgraphItem or not
     QMap<UniqueId,ConceptgraphItem*> validItems;
@@ -159,7 +157,6 @@ void ConceptgraphScene::visualize(Conceptgraph* graph)
         if (!currentItems.contains(relId))
         {
             item = new ConceptgraphItem(this->graph()->get(relId), ConceptgraphItem::RELATION);
-            item->setPos(qrand() % dim - dim/2, qrand() % dim - dim/2);
             addItem(item);
             currentItems[relId] = item;
         } else {
@@ -174,7 +171,6 @@ void ConceptgraphScene::visualize(Conceptgraph* graph)
         if (!currentItems.contains(conceptId))
         {
             item = new ConceptgraphItem(this->graph()->get(conceptId), ConceptgraphItem::CONCEPT);
-            item->setPos(qrand() % dim - dim/2, qrand() % dim - dim/2);
             addItem(item);
             currentItems[conceptId] = item;
         } else {
@@ -419,6 +415,7 @@ ConceptgraphWidget::ConceptgraphWidget(QWidget *parent, bool doSetup)
         mpUi->View->setLayout(layout);
 
         // Connect
+        connect(mpConceptScene, SIGNAL(itemAdded(QGraphicsItem*)), this, SLOT(onGraphChanged(QGraphicsItem*)));
         connect(mpConceptScene, SIGNAL(conceptAdded(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
         connect(mpConceptScene, SIGNAL(conceptRemoved(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
         connect(mpConceptScene, SIGNAL(relationAdded(const UniqueId)), this, SLOT(onGraphChanged(const UniqueId)));
@@ -458,6 +455,17 @@ void ConceptgraphWidget::loadFromYAML(const QString& yamlString)
     loadFromGraph(*newCGraph);
     delete newCGraph;
     delete newGraph;
+}
+
+void ConceptgraphWidget::onGraphChanged(QGraphicsItem* item)
+{
+    HyperedgeItem *hitem(dynamic_cast< HyperedgeItem *>(item));
+    if (!hitem)
+        return;
+    // Get current scene pos of view
+    QPointF centerOfView(mpConceptEditor->mapToScene(mpConceptEditor->viewport()->rect().center()));
+    QPointF noise(qrand() % 100 - 50, qrand() % 100 - 50);
+    item->setPos(centerOfView + noise);
 }
 
 void ConceptgraphWidget::onGraphChanged(const UniqueId id)

@@ -88,6 +88,7 @@ class CommonConceptGraphWidget : public ConceptgraphWidget
         void loadFromYAML(const QString& yamlString);
         void loadFromGraph(CommonConceptGraph& graph);
         void onGraphChanged(const UniqueId id);
+        void onGraphChanged(QGraphicsItem* item);
 
     protected:
         // Triggered when widget is about to get visible
