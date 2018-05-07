@@ -294,7 +294,7 @@ void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
         validItems[conceptId] = item;
     }
 
-    // Third pass:
+    // Third pass: Interpret common relationships
     for (auto conceptId : allConcepts)
     {
         // Check if valid
@@ -316,22 +316,12 @@ void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
             // Omit loops
             if (srcItem == destItem)
                 continue;
-            // Check if there is an edgeitem of type TO which points to destItem
-            bool found = false;
-            auto myEdgeItems = srcItem->getEdgeItems();
-            for (auto line : myEdgeItems)
+            // Check if this item is already part of the parent
+            if (!srcItem->isAncestorOf(destItem))
             {
-                if (line->getTargetItem() == destItem)
-                {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found)
-            {
-                // srcItem/parent -- HAS-A --> destItem/child
-                auto line = new CommonConceptGraphEdgeItem(srcItem, destItem, CommonConceptGraphEdgeItem::TO, CommonConceptGraphEdgeItem::DOTTED_STRAIGHT);
-                addItem(line);
+                // Be sure that destItem does not yet have a parent
+                if (!destItem->parentItem())
+                    destItem->setParentItem(srcItem);
             }
         }
         // Every part shall be linked to its container/whole
@@ -347,12 +337,22 @@ void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
             // Omit loops
             if (srcItem == destItem)
                 continue;
-            // Check if this item is already part of the parent
-            if (!srcItem->isAncestorOf(destItem))
+            // Check if there is an edgeitem of type TO which points to destItem
+            bool found = false;
+            auto myEdgeItems = destItem->getEdgeItems();
+            for (auto line : myEdgeItems)
             {
-                // Be sure that destItem does not yet have a parent
-                if (!destItem->parentItem())
-                    destItem->setParentItem(srcItem);
+                if (line->getTargetItem() == srcItem)
+                {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+            {
+                // srcItem/whole <-- PART-OF -- destItem/part
+                auto line = new CommonConceptGraphEdgeItem(destItem, srcItem, CommonConceptGraphEdgeItem::TO, CommonConceptGraphEdgeItem::DOTTED_STRAIGHT);
+                addItem(line);
             }
         }
         // Every connector shall be wired to its endpoints
