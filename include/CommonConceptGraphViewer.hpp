@@ -22,9 +22,9 @@ class CommonConceptGraphScene : public ConceptgraphScene
 
         void addItem(QGraphicsItem *item);
         void removeItem(QGraphicsItem *item);
-        CommonConceptGraph* graph()
+        CommonConceptGraph& graph()
         {
-            return static_cast<CommonConceptGraph*>(currentGraph);
+            return currentCommonConceptGraph;
         }
         QList<CommonConceptGraphItem*> selectedCommonConceptGraphItems();
         bool classesShown() { return mShowClasses; }
@@ -41,7 +41,8 @@ class CommonConceptGraphScene : public ConceptgraphScene
         void relationRemoved(const UniqueId id);
 
     public slots:
-        void visualize(CommonConceptGraph* graph=NULL);
+        void visualize();
+        void visualize(const CommonConceptGraph& graph);
         void addInstance(const UniqueId superId, const QString& label);
         void addClass(const UniqueId id, const QString& label);
         void addFact(const UniqueId superId, const UniqueId fromId, const UniqueId toId);
@@ -54,6 +55,7 @@ class CommonConceptGraphScene : public ConceptgraphScene
     protected:
         bool mShowClasses;
         bool mShowInstances;
+        CommonConceptGraph currentCommonConceptGraph;
 };
 
 class CommonConceptGraphEditor : public ConceptgraphEditor
@@ -86,7 +88,7 @@ class CommonConceptGraphWidget : public ConceptgraphWidget
     public slots:
         void loadFromYAMLFile(const QString& fileName);
         void loadFromYAML(const QString& yamlString);
-        void loadFromGraph(CommonConceptGraph& graph);
+        void loadFromGraph(const CommonConceptGraph& graph);
         void onGraphChanged(const UniqueId id);
         void onGraphChanged(QGraphicsItem* item);
 

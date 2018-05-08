@@ -32,9 +32,9 @@ class HypergraphScene : public QGraphicsScene
         void removeItem(QGraphicsItem *item);
         Hyperedges getAllEdges()
         {
-            return currentGraph->find();
+            return currentGraph.find();
         }
-        Hypergraph* graph()
+        Hypergraph& graph()
         {
             return currentGraph;
         }
@@ -51,7 +51,8 @@ class HypergraphScene : public QGraphicsScene
 
     public slots:
         // This is the constructing function of the hyperedge scene
-        virtual void visualize(Hypergraph* graph = NULL);
+        virtual void visualize();
+        virtual void visualize(const Hypergraph& graph);
         // Enable visualization
         virtual void setEnabled(bool enable) { mEnabled = enable; }
         // Enable layouting
@@ -67,7 +68,7 @@ class HypergraphScene : public QGraphicsScene
 
     protected:
         bool mEnabled;
-        Hypergraph *currentGraph;
+        Hypergraph currentGraph;
         QMap<UniqueId, HyperedgeItem*> currentItems;
 };
 
@@ -174,7 +175,7 @@ class HypergraphViewer : public QWidget
         void loadFromYAMLFile(const QString& fileName);
         // Load a hyperedge system (= hypergraph) from YAML string
         void loadFromYAML(const QString& yamlString);
-        void loadFromGraph(Hypergraph& graph);
+        void loadFromGraph(const Hypergraph& graph);
         // Store a hyperedge system (= hypergraph) to a YAML string
         void storeToYAML();
         // Clear everything

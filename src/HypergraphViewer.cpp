@@ -10,23 +10,17 @@
 
 #include "Hyperedge.hpp"
 #include "Hypergraph.hpp"
-#include "HyperedgeYAML.hpp"
+#include "HypergraphYAML.hpp"
 #include <sstream>
 #include <iostream>
 
 HypergraphScene::HypergraphScene(QObject * parent)
 : QGraphicsScene(parent)
 {
-    currentGraph = NULL;
 }
 
 HypergraphScene::~HypergraphScene()
 {
-    if (currentGraph)
-    {
-        delete currentGraph;
-        currentGraph = NULL;
-    }
 }
 
 QList<HyperedgeItem*> HypergraphScene::selectedHyperedgeItems()
@@ -77,76 +71,55 @@ void HypergraphScene::removeItem(QGraphicsItem *item)
 
 void HypergraphScene::addEdge(const UniqueId id, const QString& label)
 {
-    if (currentGraph)
-    {
-        currentGraph->create(id, label.toStdString());
-        visualize();
-    }
+    currentGraph.create(id, label.toStdString());
+    visualize();
 }
 
 void HypergraphScene::removeEdge(const UniqueId id)
 {
-    if (currentGraph)
-    {
-        currentGraph->destroy(id);
-        visualize();
-    }
+    currentGraph.destroy(id);
+    visualize();
 }
 
 void HypergraphScene::connectEdges(const UniqueId fromId, const UniqueId id, const UniqueId toId)
 {
-    if (currentGraph)
-    {
-        if (!fromId.empty())
-            currentGraph->from(Hyperedges{fromId}, Hyperedges{id});
-        if (!toId.empty())
-            currentGraph->to(Hyperedges{id}, Hyperedges{toId});
-        visualize();
-    }
+    if (!fromId.empty())
+        currentGraph.from(Hyperedges{fromId}, Hyperedges{id});
+    if (!toId.empty())
+        currentGraph.to(Hyperedges{id}, Hyperedges{toId});
+    visualize();
 }
 
 void HypergraphScene::updateEdge(const UniqueId id, const QString& label)
 {
-    if (currentGraph)
-    {
-        currentGraph->get(id)->updateLabel(label.toStdString());
-        visualize();
-    }
+    currentGraph.get(id)->updateLabel(label.toStdString());
+    visualize();
 }
 
-void HypergraphScene::visualize(Hypergraph* graph)
+void HypergraphScene::visualize(const Hypergraph& graph)
 {
-    // If new graph is given, ...
-    if (graph)
-    {
-        if (currentGraph)
-        {
-            // Merge graphs
-            auto mergedGraph = new Hypergraph(*currentGraph, *graph);
-            // destroy old one
-            delete currentGraph;
-            currentGraph = mergedGraph;
-        } else {
-            currentGraph = new Hypergraph(*graph);
-        }
-    }
+    // Merge
+    Hypergraph merged(currentGraph, graph);
+    currentGraph = merged;
 
-    // If we dont have any graph ... skip
-    if (!currentGraph)
-        return;
+    // ... and visualize
+    visualize();
+}
 
+void HypergraphScene::visualize()
+{
     // Suppress visualisation if desired
     if (!isEnabled())
         return;
 
     // Now get all edges of the graph
-    auto allEdges = currentGraph->find();
+    auto allEdges = currentGraph.find();
 
     // Then we go through all edges and check if we already have an HyperedgeItem or not
     QMap<UniqueId,HyperedgeItem*> validItems;
     for (auto edgeId : allEdges)
     {
-        auto x = currentGraph->get(edgeId);
+        auto x = currentGraph.get(edgeId);
         if (!x)
             continue;
         // Create or get item
@@ -168,7 +141,7 @@ void HypergraphScene::visualize(Hypergraph* graph)
     {
         auto edgeId = it.key();
         auto srcItem = it.value();
-        auto edge = currentGraph->get(edgeId);
+        auto edge = currentGraph.get(edgeId);
         // Make sure that item and edge share the same label
         srcItem->setLabel(QString::fromStdString(edge->label()));
         for (auto otherId : edge->pointingTo())
@@ -671,43 +644,30 @@ void HypergraphViewer::hideEvent(QHideEvent *event)
     mpScene->setEnabled(false);
 }
 
-void HypergraphViewer::loadFromGraph(Hypergraph& graph)
+void HypergraphViewer::loadFromGraph(const Hypergraph& graph)
 {
-    mpScene->visualize(&graph);
-    // update stats
-    mpUi->statsLabel->setText("HE: " + QString::number(mpScene->graph()->find().size()));
+    mpScene->visualize(graph);
 }
 
 void HypergraphViewer::loadFromYAMLFile(const QString& fileName)
 {
-    auto newGraph = YAML::LoadFile(fileName.toStdString()).as<Hypergraph*>(); // std::string >> YAML::Node >> Hypergraph*
-    loadFromGraph(*newGraph);
-    delete newGraph;
+    loadFromGraph(YAML::LoadFile(fileName.toStdString()).as<Hypergraph>());
 }
 
 void HypergraphViewer::loadFromYAML(const QString& yamlString)
 {
-    auto newGraph = YAML::Load(yamlString.toStdString()).as<Hypergraph*>();
-    loadFromGraph(*newGraph);
-    delete newGraph;
+    loadFromGraph(YAML::Load(yamlString.toStdString()).as<Hypergraph>());
 }
 
 void HypergraphViewer::storeToYAML()
 {
-    if (mpScene->graph())
-    {
-        std::stringstream result;
-        YAML::Node node;
-        node = mpScene->graph();
-        result << node;
-        emit YAMLStringReady(QString::fromStdString(result.str()));
-    }
+    emit YAMLStringReady(QString::fromStdString(YAML::StringFrom(mpScene->graph())));
 }
 
 void HypergraphViewer::onGraphChanged(const UniqueId id)
 {
     // update stats
-    mpUi->statsLabel->setText("HE: " + QString::number(mpScene->graph()->find().size()));
+    mpUi->statsLabel->setText("HE: " + QString::number(mpScene->graph().find().size()));
 }
 
 void HypergraphViewer::onGraphChanged(QGraphicsItem* item)
@@ -723,14 +683,11 @@ void HypergraphViewer::onGraphChanged(QGraphicsItem* item)
 
 void HypergraphViewer::clearHypergraph()
 {
-    if (mpScene->graph())
-    {
-        auto edges = mpScene->graph()->find();
-        for (auto edgeId : edges)
-            mpScene->graph()->destroy(edgeId);
-    }
+    auto edges = mpScene->graph().find();
+    for (auto edgeId : edges)
+        mpScene->graph().destroy(edgeId);
     // update stats
-    mpUi->statsLabel->setText("HE: " + QString::number(mpScene->graph()->find().size()));
+    mpUi->statsLabel->setText("HE: " + QString::number(mpScene->graph().find().size()));
 }
 
 void HypergraphViewer::setEquilibriumDistance(qreal distance)

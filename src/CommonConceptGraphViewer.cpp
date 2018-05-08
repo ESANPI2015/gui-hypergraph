@@ -12,7 +12,7 @@
 #include "Hypergraph.hpp"
 #include "Conceptgraph.hpp"
 #include "CommonConceptGraph.hpp"
-#include "HyperedgeYAML.hpp"
+#include "HypergraphYAML.hpp"
 #include <sstream>
 #include <iostream>
 
@@ -73,62 +73,38 @@ void CommonConceptGraphScene::removeItem(QGraphicsItem *item)
 
 void CommonConceptGraphScene::addInstance(const UniqueId superId, const QString& label)
 {
-    CommonConceptGraph *g = graph();
-    if (g)
-    {
-        g->instantiateFrom(superId, label.toStdString());
-        visualize();
-    }
+    graph().instantiateFrom(superId, label.toStdString());
+    visualize();
 }
 
 void CommonConceptGraphScene::addClass(const UniqueId id, const QString& label)
 {
-    CommonConceptGraph *g = graph();
-    if (g)
-    {
-        g->create(id, label.toStdString());
-        visualize();
-    }
+    graph().create(id, label.toStdString());
+    visualize();
 }
 
 void CommonConceptGraphScene::addFact(const UniqueId superId, const UniqueId fromId, const UniqueId toId)
 {
-    CommonConceptGraph *g = graph();
-    if (g)
-    {
-        g->factFrom(Hyperedges{fromId}, Hyperedges{toId}, superId);
-        visualize();
-    }
+    graph().factFrom(Hyperedges{fromId}, Hyperedges{toId}, superId);
+    visualize();
 }
 
 void CommonConceptGraphScene::addRelation(const UniqueId id, const UniqueId fromId, const UniqueId toId, const QString& label)
 {
-    CommonConceptGraph *g = graph();
-    if (g)
-    {
-        g->relate(id, Hyperedges{fromId}, Hyperedges{toId}, label.toStdString());
-        visualize();
-    }
+    graph().relate(id, Hyperedges{fromId}, Hyperedges{toId}, label.toStdString());
+    visualize();
 }
 
 void CommonConceptGraphScene::removeEdge(const UniqueId id)
 {
-    CommonConceptGraph *g = graph();
-    if (g)
-    {
-        g->destroy(id);
-        visualize();
-    }
+    graph().destroy(id);
+    visualize();
 }
 
 void CommonConceptGraphScene::updateEdge(const UniqueId id, const QString& label)
 {
-    CommonConceptGraph *g = graph();
-    if (g)
-    {
-        g->get(id)->updateLabel(label.toStdString());
-        visualize();
-    }
+    graph().get(id)->updateLabel(label.toStdString());
+    visualize();
 }
 
 void CommonConceptGraphScene::showClasses(const bool value)
@@ -147,13 +123,9 @@ QStringList CommonConceptGraphScene::getAllClassUIDs()
 {
     QStringList result;
     Hyperedges allClasses;
-    CommonConceptGraph *g = graph();
-    if (g)
-    {
-        Hyperedges allConcepts = g->find();
-        Hyperedges allInstances = g->instancesOf(allConcepts);
-        allClasses = subtract(allConcepts, allInstances);
-    }
+    Hyperedges allConcepts = graph().find();
+    Hyperedges allInstances = graph().instancesOf(allConcepts);
+    allClasses = subtract(allConcepts, allInstances);
     for (UniqueId classUID : allClasses)
         result.push_back(QString::fromStdString(classUID));
     return result;
@@ -163,47 +135,30 @@ QStringList CommonConceptGraphScene::getAllRelationUIDs()
 {
     QStringList result;
     Hyperedges allRelClasses;
-    CommonConceptGraph *g = graph();
-    if (g)
-    {
-        Hyperedges allRelations = g->relations();
-        Hyperedges allFacts = g->factsOf(allRelations);
-        allRelClasses = subtract(allRelations, allFacts);
-    }
+    Hyperedges allRelations = graph().relations();
+    Hyperedges allFacts = graph().factsOf(allRelations);
+    allRelClasses = subtract(allRelations, allFacts);
     for (UniqueId classUID : allRelClasses)
         result.push_back(QString::fromStdString(classUID));
     return result;
 }
 
-void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
+void CommonConceptGraphScene::visualize(const CommonConceptGraph& graph)
 {
-    // If a new graph is given, ...
-    if (graph)
-    {
-        if (currentGraph)
-        {
-            // Merge graphs
-            Hypergraph merged = Hypergraph(*currentGraph, *graph);
-            Conceptgraph mergedCG(merged);
-            CommonConceptGraph* mergedGraph = new CommonConceptGraph(mergedCG);
-            // destroy old one
-            delete currentGraph;
-            currentGraph = mergedGraph;
-        } else {
-            currentGraph = new CommonConceptGraph(*graph);
-        }
-    }
+    // Merge & visualize
+    Hypergraph merged(currentCommonConceptGraph, graph);
+    currentCommonConceptGraph = CommonConceptGraph(merged);
+    visualize();
+}
 
-    // If we dont have any graph ... skip
-    if (!this->graph())
-        return;
-
+void CommonConceptGraphScene::visualize()
+{
     // Suppress visualisation if desired
     if (!isEnabled())
         return;
 
     // Make a snapshot of the current graph
-    CommonConceptGraph snapshot(*this->graph());
+    CommonConceptGraph snapshot(this->graph());
 
     // A: Try to draw instances/classes
     Hyperedges allConcepts(snapshot.find());
@@ -659,27 +614,19 @@ void CommonConceptGraphWidget::showEvent(QShowEvent *event)
     mpCommonConceptScene->visualize();
 }
 
-void CommonConceptGraphWidget::loadFromGraph(CommonConceptGraph& graph)
+void CommonConceptGraphWidget::loadFromGraph(const CommonConceptGraph& graph)
 {
-    mpCommonConceptScene->visualize(&graph);
+    mpCommonConceptScene->visualize(graph);
 }
 
 void CommonConceptGraphWidget::loadFromYAMLFile(const QString& fileName)
 {
-    Hypergraph* newGraph = YAML::LoadFile(fileName.toStdString()).as<Hypergraph*>(); // std::string >> YAML::Node >> Hypergraph* >> CommonConceptGraph
-    Conceptgraph newCGraph(*newGraph);
-    CommonConceptGraph newCCGraph(newCGraph);
-    loadFromGraph(newCCGraph);
-    delete newGraph;
+    loadFromGraph(CommonConceptGraph(YAML::LoadFile(fileName.toStdString()).as<Hypergraph>()));
 }
 
 void CommonConceptGraphWidget::loadFromYAML(const QString& yamlString)
 {
-    auto newGraph = YAML::Load(yamlString.toStdString()).as<Hypergraph*>();
-    Conceptgraph newCGraph(*newGraph);
-    CommonConceptGraph newCCGraph(newCGraph);
-    loadFromGraph(newCCGraph);
-    delete newGraph;
+    loadFromGraph(CommonConceptGraph(YAML::Load(yamlString.toStdString()).as<Hypergraph>()));
 }
 
 void CommonConceptGraphWidget::onGraphChanged(QGraphicsItem* item)
@@ -695,11 +642,11 @@ void CommonConceptGraphWidget::onGraphChanged(QGraphicsItem* item)
 
 void CommonConceptGraphWidget::onGraphChanged(const UniqueId id)
 {
-    auto allConcepts = mpCommonConceptScene->graph()->find();
-    auto allInstances = mpCommonConceptScene->graph()->instancesOf(allConcepts);
+    auto allConcepts = mpCommonConceptScene->graph().find();
+    auto allInstances = mpCommonConceptScene->graph().instancesOf(allConcepts);
     auto allClasses   = subtract(allConcepts, allInstances);
-    auto allRelations = mpCommonConceptScene->graph()->relations();
-    auto allFacts = mpCommonConceptScene->graph()->factsOf(allRelations);
+    auto allRelations = mpCommonConceptScene->graph().relations();
+    auto allFacts = mpCommonConceptScene->graph().factsOf(allRelations);
     auto allRelClasses = subtract(allRelations, allFacts);
     // Fill the lists
     mpNewUi->classListWidget->clear();

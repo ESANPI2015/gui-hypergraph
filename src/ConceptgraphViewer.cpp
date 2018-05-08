@@ -10,7 +10,7 @@
 
 #include "Hypergraph.hpp"
 #include "Conceptgraph.hpp"
-#include "HyperedgeYAML.hpp"
+#include "HypergraphYAML.hpp"
 #include <sstream>
 #include <iostream>
 
@@ -69,79 +69,51 @@ void ConceptgraphScene::removeItem(QGraphicsItem *item)
 
 void ConceptgraphScene::addConcept(const UniqueId id, const QString& label)
 {
-    Conceptgraph *g = graph();
-    if (g)
-    {
-        if (id.empty())
-            g->create(label.toStdString());
-        else
-            g->create(id, label.toStdString());
-        visualize();
-    }
+    if (id.empty())
+        currentConceptGraph.create(label.toStdString());
+    else
+        currentConceptGraph.create(id, label.toStdString());
+    visualize();
 }
 
 void ConceptgraphScene::addRelation(const UniqueId fromId, const UniqueId toId, const UniqueId id, const QString& label)
 {
-    Conceptgraph *g = graph();
-    if (g)
-    {
-        if (id.empty())
-            g->relate(Hyperedges{fromId}, Hyperedges{toId}, label.toStdString());
-        else
-            g->relate(id, Hyperedges{fromId}, Hyperedges{toId}, label.toStdString());
-        visualize();
-    }
+    if (id.empty())
+        currentConceptGraph.relate(Hyperedges{fromId}, Hyperedges{toId}, label.toStdString());
+    else
+        currentConceptGraph.relate(id, Hyperedges{fromId}, Hyperedges{toId}, label.toStdString());
+    visualize();
 }
 
 void ConceptgraphScene::removeEdge(const UniqueId id)
 {
-    Conceptgraph *g = graph();
-    if (g)
-    {
-        g->destroy(id);
-        visualize();
-    }
+    currentConceptGraph.destroy(id);
+    visualize();
 }
 
 void ConceptgraphScene::updateEdge(const UniqueId id, const QString& label)
 {
-    Conceptgraph *g = graph();
-    if (g)
-    {
-        g->get(id)->updateLabel(label.toStdString());
-        visualize();
-    }
+    currentConceptGraph.get(id)->updateLabel(label.toStdString());
+    visualize();
 }
 
-void ConceptgraphScene::visualize(Conceptgraph* graph)
+void ConceptgraphScene::visualize(const Conceptgraph& graph)
 {
-    // If a new graph is given, ...
-    if (graph)
-    {
-        if (currentGraph)
-        {
-            // Merge graphs
-            Hypergraph merged = Hypergraph(*currentGraph, *graph);
-            Conceptgraph* mergedGraph = new Conceptgraph(merged);
-            // destroy old one
-            delete currentGraph;
-            currentGraph = mergedGraph;
-        } else {
-            currentGraph = new Conceptgraph(*graph);
-        }
-    }
+    // Merge & visualize
+    Hypergraph merged(currentConceptGraph, graph);
+    currentConceptGraph = Conceptgraph(merged);
+    visualize();
+}
 
-    // If we dont have any graph ... skip
-    if (!this->graph())
-        return;
-
+void ConceptgraphScene::visualize()
+{
     // Suppress visualisation if desired
     if (!isEnabled())
         return;
 
     // Now get all edges of the graph
-    auto allConcepts = this->graph()->find();
-    auto allRelations = this->graph()->relations();
+    auto allConcepts = this->graph().find();
+    auto allRelations = this->graph().relations();
 
     // Then we go through all edges and check if we already have an ConceptgraphItem or not
     QMap<UniqueId,ConceptgraphItem*> validItems;
@@ -156,7 +128,7 @@ void ConceptgraphScene::visualize(Conceptgraph* graph)
         ConceptgraphItem *item;
         if (!currentItems.contains(relId))
         {
-            item = new ConceptgraphItem(this->graph()->get(relId), ConceptgraphItem::RELATION);
+            item = new ConceptgraphItem(this->graph().get(relId), ConceptgraphItem::RELATION);
             addItem(item);
             currentItems[relId] = item;
         } else {
@@ -170,7 +142,7 @@ void ConceptgraphScene::visualize(Conceptgraph* graph)
         ConceptgraphItem *item;
         if (!currentItems.contains(conceptId))
         {
-            item = new ConceptgraphItem(this->graph()->get(conceptId), ConceptgraphItem::CONCEPT);
+            item = new ConceptgraphItem(this->graph().get(conceptId), ConceptgraphItem::CONCEPT);
             addItem(item);
             currentItems[conceptId] = item;
         } else {
@@ -185,7 +157,7 @@ void ConceptgraphScene::visualize(Conceptgraph* graph)
     {
         auto edgeId = it.key();
         auto srcItem = it.value();
-        auto edge = this->graph()->get(edgeId);
+        auto edge = this->graph().get(edgeId);
         // Make sure that item and edge share the same label
         srcItem->setLabel(QString::fromStdString(edge->label()));
         for (auto otherId : edge->pointingTo())
@@ -434,27 +406,19 @@ void ConceptgraphWidget::showEvent(QShowEvent *event)
     mpConceptScene->visualize();
 }
 
-void ConceptgraphWidget::loadFromGraph(Conceptgraph& graph)
+void ConceptgraphWidget::loadFromGraph(const Conceptgraph& graph)
 {
-    mpConceptScene->visualize(&graph);
+    mpConceptScene->visualize(graph);
 }
 
 void ConceptgraphWidget::loadFromYAMLFile(const QString& fileName)
 {
-    Hypergraph* newGraph = YAML::LoadFile(fileName.toStdString()).as<Hypergraph*>(); // std::string >> YAML::Node >> Hypergraph* >> Conceptgraph
-    Conceptgraph* newCGraph = new Conceptgraph(*newGraph);
-    loadFromGraph(*newCGraph);
-    delete newCGraph;
-    delete newGraph;
+    loadFromGraph(Conceptgraph(YAML::LoadFile(fileName.toStdString()).as<Hypergraph>()));
 }
 
 void ConceptgraphWidget::loadFromYAML(const QString& yamlString)
 {
-    auto newGraph = YAML::Load(yamlString.toStdString()).as<Hypergraph*>();
-    Conceptgraph* newCGraph = new Conceptgraph(*newGraph);
-    loadFromGraph(*newCGraph);
-    delete newCGraph;
-    delete newGraph;
+    loadFromGraph(Conceptgraph(YAML::Load(yamlString.toStdString()).as<Hypergraph>()));
 }
 
 void ConceptgraphWidget::onGraphChanged(QGraphicsItem* item)
@@ -472,7 +436,7 @@ void ConceptgraphWidget::onGraphChanged(const UniqueId id)
 {
     // Gets triggered whenever a concept||relations has been added||removed
     mpUi->statsLabel->setText(
-                            "CONCEPTS: " + QString::number(mpConceptScene->graph()->find().size()) +
-                            "  RELATIONS: " + QString::number(mpConceptScene->graph()->relations().size())
+                            "CONCEPTS: " + QString::number(mpConceptScene->graph().find().size()) +
+                            "  RELATIONS: " + QString::number(mpConceptScene->graph().relations().size())
                              );
 }

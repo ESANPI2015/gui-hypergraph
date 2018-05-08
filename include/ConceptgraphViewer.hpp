@@ -16,9 +16,9 @@ class ConceptgraphScene : public ForceBasedScene
 
         void addItem(QGraphicsItem *item);
         void removeItem(QGraphicsItem *item);
-        Conceptgraph* graph()
+        Conceptgraph& graph()
         {
-            return static_cast<Conceptgraph*>(currentGraph);
+            return currentConceptGraph;
         }
         QList<ConceptgraphItem*> selectedConceptgraphItems();
 
@@ -29,11 +29,14 @@ class ConceptgraphScene : public ForceBasedScene
         void relationRemoved(const UniqueId id);
 
     public slots:
-        void visualize(Conceptgraph* graph=NULL);
+        void visualize();
+        void visualize(const Conceptgraph& graph);
         void addConcept(const UniqueId id, const QString& label);
         void addRelation(const UniqueId fromId, const UniqueId toId, const UniqueId id, const QString& label);
         void removeEdge(const UniqueId id);
         void updateEdge(const UniqueId id, const QString& label);
+    protected:
+        Conceptgraph currentConceptGraph;
 };
 
 class ConceptgraphEditor : public HypergraphEdit
@@ -66,7 +69,7 @@ class ConceptgraphWidget : public HypergraphViewer
     public slots:
         void loadFromYAMLFile(const QString& fileName);
         void loadFromYAML(const QString& yamlString);
-        void loadFromGraph(Conceptgraph& graph);
+        void loadFromGraph(const Conceptgraph& graph);
         void onGraphChanged(const UniqueId id);
         void onGraphChanged(QGraphicsItem* item);
 
