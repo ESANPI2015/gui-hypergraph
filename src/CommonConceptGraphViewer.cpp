@@ -205,216 +205,195 @@ void CommonConceptGraphScene::visualize(CommonConceptGraph* graph)
     // Make a snapshot of the current graph
     CommonConceptGraph snapshot(*this->graph());
 
-    // Select either instances or classes
-    auto allConcepts = snapshot.find();
-    auto allInstances = snapshot.instancesOf(allConcepts);
-    auto allClasses   = subtract(allConcepts, allInstances);
-
-    if (!mShowClasses)
-    {
-        allConcepts = subtract(allConcepts, allClasses);
-        allClasses.clear();
-    }
-    if (!mShowInstances)
-    {
-        allConcepts = subtract(allConcepts, allInstances);
-        allInstances.clear();
-    }
-
-    // First pass: Sort instances into different sets
-    QMap< UniqueId, Hyperedges > childrenOfParent;
-    QMap< UniqueId, Hyperedges > partsOfWhole;
-    QMap< UniqueId, Hyperedges > superclassesOf;
-    QMap< UniqueId, Hyperedges > endpointsOfConnector;
-    // For all
-    for (auto conceptId : allConcepts)
-    {
-        // Find children
-        Hyperedges children = snapshot.childrenOf(Hyperedges{conceptId});
-        children.erase(conceptId);
-        childrenOfParent[conceptId] = children;
-        // Find parts
-        Hyperedges parts = snapshot.componentsOf(Hyperedges{conceptId});
-        parts.erase(conceptId);
-        partsOfWhole[conceptId] = parts;
-        // Find endpoints
-        Hyperedges endpoints = snapshot.endpointsOf(Hyperedges{conceptId});
-        endpoints.erase(conceptId);
-        endpointsOfConnector[conceptId] = endpoints;
-    }
-    // For classes
-    for (auto classId : allClasses)
-    {
-        // Find superclasses
-        Hyperedges superclasses = snapshot.subclassesOf(Hyperedges{classId},"",CommonConceptGraph::TraversalDirection::DOWN);
-        superclasses.erase(classId);
-        superclassesOf[classId] = superclasses;
-    }
-    // For instances
-    for (auto instanceId : allInstances)
-    {
-        // Find superclasses
-        Hyperedges superclasses = snapshot.instancesOf(Hyperedges{instanceId},"",CommonConceptGraph::TraversalDirection::DOWN);
-        superclasses.erase(instanceId);
-        superclassesOf[instanceId] = superclasses;
-    }
-
-    // Second pass: Draw either class or instance
+    // A: Try to draw instances/classes
+    Hyperedges allConcepts(snapshot.find());
     QMap<UniqueId,CommonConceptGraphItem*> validItems;
-    for (auto conceptId : allConcepts)
+    QMap<UniqueId, Hyperedges> superclassesOf; //TODO: Needed?
+    for (UniqueId conceptId : allConcepts)
     {
+        // First, try to get superclasses of an instance
+        bool instance = true;
+        superclassesOf[conceptId] = snapshot.instancesOf(Hyperedges{conceptId},"", CommonConceptGraph::TraversalDirection::DOWN);
+        if (!superclassesOf[conceptId].size())
+        {
+            // Get the superclasses of a class
+            instance = false;
+            superclassesOf[conceptId] = snapshot.subclassesOf(Hyperedges{conceptId},"",CommonConceptGraph::TraversalDirection::DOWN);
+        }
+
+        // Skip if we shall not draw it
+        if (instance && !mShowInstances)
+            continue;
+        if (!instance && !mShowClasses)
+            continue;
+
         // Create or get item
         CommonConceptGraphItem *item;
-        // Create superclass label
-        std::string superclassLabel;
-        for (auto superclassId : superclassesOf[conceptId])
-        {
-            superclassLabel += (" " + snapshot.get(superclassId)->label());
-        }
         if (!currentItems.contains(conceptId))
         {
             // Check if the concept is a class or an instance
-            if (allInstances.count(conceptId))
+            if (instance)
             {
-                item = new CommonConceptGraphItem(snapshot.get(conceptId), CommonConceptGraphItem::INSTANCE, superclassLabel);
+                item = new CommonConceptGraphItem(snapshot.get(conceptId), CommonConceptGraphItem::INSTANCE, "NO LABEL");
             } else {
-                item = new CommonConceptGraphItem(snapshot.get(conceptId), CommonConceptGraphItem::CLASS, superclassLabel);
+                item = new CommonConceptGraphItem(snapshot.get(conceptId), CommonConceptGraphItem::CLASS, "NO LABEL");
             }
             addItem(item);
             currentItems[conceptId] = item;
         } else {
             item = dynamic_cast<CommonConceptGraphItem*>(currentItems[conceptId]);
         }
+        // Create superclass label
+        std::string superclassLabel;
+        for (auto superclassId : superclassesOf[conceptId])
+        {
+            superclassLabel += (" " + snapshot.get(superclassId)->label());
+        }
         // Make sure that the labels are up-to-date
         item->setLabel(QString::fromStdString(snapshot.get(conceptId)->label()), QString::fromStdString(superclassLabel));
         validItems[conceptId] = item;
     }
 
-    // Third pass: Interpret common relationships
-    for (auto conceptId : allConcepts)
+    // B: Interpret relations. That means that we have to create different edges for different types
+    // Cycle through visible concepts
+    for (UniqueId conceptId : allConcepts)
     {
-        // Check if valid
+        // Skip invalid items
         if (!validItems.contains(conceptId))
             continue;
-        CommonConceptGraphItem *srcItem = dynamic_cast<CommonConceptGraphItem*>(validItems[conceptId]);
+        CommonConceptGraphItem *srcItem(dynamic_cast<CommonConceptGraphItem*>(validItems[conceptId]));
         if (!srcItem)
             continue;
-        // Every child shall be attached to its parent
-        for (auto childId : childrenOfParent[conceptId])
+        Hyperedges relationsFrom(snapshot.relationsFrom(Hyperedges{conceptId}));
+
+        // Cycle through possible counterparts
+        for (UniqueId otherId : allConcepts)
         {
-            // Check if valid
-            if (!validItems.contains(childId))
+            // Omit loops
+            if (conceptId == otherId)
                 continue;
-            // A child is in validItems, currentItems and visible ... But we want it to be part of its parent
-            CommonConceptGraphItem *destItem = dynamic_cast<CommonConceptGraphItem*>(validItems[childId]);
+            // Skip invalid items
+            if (!validItems.contains(otherId))
+                continue;
+            CommonConceptGraphItem *destItem(dynamic_cast<CommonConceptGraphItem*>(validItems[otherId]));
             if (!destItem)
                 continue;
-            // Omit loops
-            if (srcItem == destItem)
-                continue;
-            // Check if this item is already part of the parent
-            if (!srcItem->isAncestorOf(destItem))
+            Hyperedges relationsTo(snapshot.relationsTo(Hyperedges{otherId}));
+            // The intersection between relationsFrom and relationsTo are all relations between the two concepts
+            Hyperedges commonRelations(intersect(relationsFrom, relationsTo));
+            for (UniqueId relId : commonRelations)
             {
-                // Be sure that destItem does not yet have a parent
-                if (!destItem->parentItem())
-                    destItem->setParentItem(srcItem);
-            }
-        }
-        // Every part shall be linked to its container/whole
-        for (auto partId : partsOfWhole[conceptId])
-        {
-            // Check if valid
-            if (!validItems.contains(partId))
-                continue;
-            // a part points to its whole
-            CommonConceptGraphItem *destItem = dynamic_cast<CommonConceptGraphItem*>(validItems[partId]);
-            if (!destItem)
-                continue;
-            // Omit loops
-            if (srcItem == destItem)
-                continue;
-            // Check if there is an edgeitem of type TO which points to destItem
-            bool found = false;
-            auto myEdgeItems = destItem->getEdgeItems();
-            for (auto line : myEdgeItems)
-            {
-                if (line->getTargetItem() == srcItem)
+                // Get super relation(s) of a fact
+                bool fact = true;
+                Hyperedges superRelations(snapshot.factsOf(relId, "", CommonConceptGraph::TraversalDirection::DOWN));
+                if (!superRelations.size())
                 {
-                    found = true;
-                    break;
+                    fact = false;
+                    superRelations = snapshot.subrelationsOf(relId, "", CommonConceptGraph::TraversalDirection::DOWN);
                 }
-            }
-            if (!found)
-            {
-                // srcItem/whole <-- PART-OF -- destItem/part
-                auto line = new CommonConceptGraphEdgeItem(destItem, srcItem, CommonConceptGraphEdgeItem::TO, CommonConceptGraphEdgeItem::DOTTED_STRAIGHT);
-                addItem(line);
-            }
-        }
-        // Every connector shall be wired to its endpoints
-        for (auto endpointId : endpointsOfConnector[conceptId])
-        {
-            // Check if valid
-            if (!validItems.contains(endpointId))
-                continue;
-            // a connector points to each one of its connectors
-            CommonConceptGraphItem *destItem = dynamic_cast<CommonConceptGraphItem*>(validItems[endpointId]);
-            if (!destItem)
-                continue;
-            // Omit loops
-            if (srcItem == destItem)
-                continue;
-            // Check if there is an edgeitem of type TO which points to destItem
-            bool found = false;
-            auto myEdgeItems = srcItem->getEdgeItems();
-            for (auto line : myEdgeItems)
-            {
-                if (line->getTargetItem() == destItem)
+                // Now we know if a relation is a fact of some relation def or the def itself
+                // We won't show defs, so we skip it
+                if (!fact)
+                    continue;
+
+                // Extend superRelations by transitive closure
+                // Only then we can be sure that CommonConceptGraph relations are visible
+                superRelations = unite(superRelations, snapshot.subrelationsOf(superRelations, "", CommonConceptGraph::TraversalDirection::DOWN));
+
+                // Now we want to make the fact visible
+                // We have to change style and/or color of the link depending on superclass
+                // Or we interpret the edge (like parent-child relationship)
+                if (superRelations.count(CommonConceptGraph::HasAId))
                 {
-                    found = true;
-                    break;
+                    // parent -- HAS-A --> child
+                    // Check if this item is already part of the parent
+                    if (!srcItem->isAncestorOf(destItem))
+                    {
+                        // Be sure that destItem does not yet have a parent
+                        if (!destItem->parentItem())
+                            destItem->setParentItem(srcItem);
+                    }
                 }
-            }
-            if (!found)
-            {
-                auto line = new CommonConceptGraphEdgeItem(srcItem, destItem, CommonConceptGraphEdgeItem::TO, CommonConceptGraphEdgeItem::SOLID_CURVED);
-                addItem(line);
-            }
-        }
-        // Every instance/class shall be related to its superclasses
-        for (auto superclassId : superclassesOf[conceptId])
-        {
-            // Check if valid
-            if (!validItems.contains(superclassId))
-                continue;
-            // a connector points to each one of its connectors
-            CommonConceptGraphItem *destItem = dynamic_cast<CommonConceptGraphItem*>(validItems[superclassId]);
-            if (!destItem)
-                continue;
-            // Omit loops
-            if (srcItem == destItem)
-                continue;
-            // Check if there is an edgeitem of type TO which points to destItem
-            bool found = false;
-            auto myEdgeItems = srcItem->getEdgeItems();
-            for (auto line : myEdgeItems)
-            {
-                if (line->getTargetItem() == destItem)
+                else if (superRelations.count(CommonConceptGraph::PartOfId))
                 {
-                    found = true;
-                    break;
+                    // part -- PART-OF --> whole
+                    // Check if there is an edgeitem of type TO which points to destItem
+                    bool found = false;
+                    auto myEdgeItems = srcItem->getEdgeItems();
+                    for (auto line : myEdgeItems)
+                    {
+                        if (line->getTargetItem() == destItem)
+                        {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found)
+                    {
+                        auto line = new CommonConceptGraphEdgeItem(srcItem, destItem, CommonConceptGraphEdgeItem::TO, CommonConceptGraphEdgeItem::DOTTED_STRAIGHT);
+                        addItem(line);
+                    }
                 }
-            }
-            if (!found)
-            {
-                CommonConceptGraphEdgeItem *line;
-                if (srcItem->getType() == CommonConceptGraphItem::INSTANCE)
+                else if (superRelations.count(CommonConceptGraph::IsAId))
                 {
-                    line = new CommonConceptGraphEdgeItem(srcItem, destItem, CommonConceptGraphEdgeItem::TO, CommonConceptGraphEdgeItem::DASHED_STRAIGHT);
-                } else {
-                    line = new CommonConceptGraphEdgeItem(srcItem, destItem, CommonConceptGraphEdgeItem::TO, CommonConceptGraphEdgeItem::SOLID_STRAIGHT);
+                    // subclass -- IS-A --> superclass
+                    // Check if there is an edgeitem of type TO which points to destItem
+                    bool found = false;
+                    auto myEdgeItems = srcItem->getEdgeItems();
+                    for (auto line : myEdgeItems)
+                    {
+                        if (line->getTargetItem() == destItem)
+                        {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found)
+                    {
+                        auto line = new CommonConceptGraphEdgeItem(srcItem, destItem, CommonConceptGraphEdgeItem::TO, CommonConceptGraphEdgeItem::SOLID_STRAIGHT);
+                        addItem(line);
+                    }
                 }
-                addItem(line);
+                else if (superRelations.count(CommonConceptGraph::InstanceOfId))
+                {
+                    // individual -- INSTANCE-OF --> superclass
+                    // Check if there is an edgeitem of type TO which points to destItem
+                    bool found = false;
+                    auto myEdgeItems = srcItem->getEdgeItems();
+                    for (auto line : myEdgeItems)
+                    {
+                        if (line->getTargetItem() == destItem)
+                        {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found)
+                    {
+                        auto line = new CommonConceptGraphEdgeItem(srcItem, destItem, CommonConceptGraphEdgeItem::TO, CommonConceptGraphEdgeItem::DASHED_STRAIGHT);
+                        addItem(line);
+                    }
+                }
+                else if (superRelations.count(CommonConceptGraph::ConnectsId))
+                {
+                    // interface -- CONNECTS --> interface
+                    // Check if there is an edgeitem of type TO which points to destItem
+                    bool found = false;
+                    auto myEdgeItems = srcItem->getEdgeItems();
+                    for (auto line : myEdgeItems)
+                    {
+                        if (line->getTargetItem() == destItem)
+                        {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found)
+                    {
+                        auto line = new CommonConceptGraphEdgeItem(srcItem, destItem, CommonConceptGraphEdgeItem::TO, CommonConceptGraphEdgeItem::SOLID_CURVED);
+                        addItem(line);
+                    }
+                }
             }
         }
     }
@@ -710,7 +689,7 @@ void CommonConceptGraphWidget::onGraphChanged(QGraphicsItem* item)
         return;
     // Get current scene pos of view
     QPointF centerOfView(mpCommonConceptEditor->mapToScene(mpCommonConceptEditor->viewport()->rect().center()));
-    QPointF noise(qrand() % 100 - 50, qrand() % 100 - 50);
+    QPointF noise(qrand() % 100, qrand() % 100);
     item->setPos(centerOfView + noise);
 }
 
