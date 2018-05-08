@@ -147,6 +147,7 @@ void CommonConceptGraphScene::visualize(const CommonConceptGraph& graph)
 {
     // Merge & visualize
     Hypergraph merged(currentCommonConceptGraph, graph);
+    currentGraph = merged;
     currentCommonConceptGraph = CommonConceptGraph(merged);
     visualize();
 }

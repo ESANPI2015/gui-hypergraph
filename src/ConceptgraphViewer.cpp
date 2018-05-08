@@ -101,6 +101,7 @@ void ConceptgraphScene::visualize(const Conceptgraph& graph)
 {
     // Merge & visualize
     Hypergraph merged(currentConceptGraph, graph);
+    currentGraph = merged;
     currentConceptGraph = Conceptgraph(merged);
     visualize();
 }
