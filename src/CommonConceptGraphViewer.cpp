@@ -73,7 +73,7 @@ void CommonConceptGraphScene::removeItem(QGraphicsItem *item)
 
 void CommonConceptGraphScene::addInstance(const UniqueId superId, const QString& label)
 {
-    graph().instantiateFrom(superId, label.toStdString());
+    graph().instantiateDeepFrom(Hyperedges{superId}, label.toStdString());
     visualize();
 }
 
