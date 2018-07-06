@@ -169,12 +169,12 @@ void CommonConceptGraphScene::visualize()
     {
         // First, try to get superclasses of an instance
         bool instance = true;
-        superclassesOf[conceptId] = snapshot.instancesOf(Hyperedges{conceptId},"", CommonConceptGraph::TraversalDirection::DOWN);
+        superclassesOf[conceptId] = snapshot.instancesOf(Hyperedges{conceptId},"", CommonConceptGraph::TraversalDirection::FORWARD);
         if (!superclassesOf[conceptId].size())
         {
             // Get the superclasses of a class
             instance = false;
-            superclassesOf[conceptId] = snapshot.subclassesOf(Hyperedges{conceptId},"",CommonConceptGraph::TraversalDirection::DOWN);
+            superclassesOf[conceptId] = snapshot.subclassesOf(Hyperedges{conceptId},"",CommonConceptGraph::TraversalDirection::FORWARD);
         }
 
         // Skip if we shall not draw it
@@ -241,11 +241,11 @@ void CommonConceptGraphScene::visualize()
             {
                 // Get super relation(s) of a fact
                 bool fact = true;
-                Hyperedges superRelations(snapshot.factsOf(relId, "", CommonConceptGraph::TraversalDirection::DOWN));
+                Hyperedges superRelations(snapshot.factsOf(relId, "", CommonConceptGraph::TraversalDirection::FORWARD));
                 if (!superRelations.size())
                 {
                     fact = false;
-                    superRelations = snapshot.subrelationsOf(relId, "", CommonConceptGraph::TraversalDirection::DOWN);
+                    superRelations = snapshot.subrelationsOf(relId, "", CommonConceptGraph::TraversalDirection::FORWARD);
                 }
                 // Now we know if a relation is a fact of some relation def or the def itself
                 // We won't show defs, so we skip it
@@ -254,7 +254,7 @@ void CommonConceptGraphScene::visualize()
 
                 // Extend superRelations by transitive closure
                 // Only then we can be sure that CommonConceptGraph relations are visible
-                superRelations = unite(superRelations, snapshot.subrelationsOf(superRelations, "", CommonConceptGraph::TraversalDirection::DOWN));
+                superRelations = unite(superRelations, snapshot.subrelationsOf(superRelations, "", CommonConceptGraph::TraversalDirection::FORWARD));
 
                 // Now we want to make the fact visible
                 // We have to change style and/or color of the link depending on superclass
