@@ -259,7 +259,7 @@ void CommonConceptGraphScene::visualize()
                 // Now we want to make the fact visible
                 // We have to change style and/or color of the link depending on superclass
                 // Or we interpret the edge (like parent-child relationship)
-                if (superRelations.count(CommonConceptGraph::HasAId))
+                if (std::find(superRelations.begin(), superRelations.end(), CommonConceptGraph::HasAId) != superRelations.end())
                 {
                     // parent -- HAS-A --> child
                     // Check if this item is already part of the parent
@@ -270,7 +270,7 @@ void CommonConceptGraphScene::visualize()
                             destItem->setParentItem(srcItem);
                     }
                 }
-                else if (superRelations.count(CommonConceptGraph::PartOfId))
+                else if (std::find(superRelations.begin(), superRelations.end(), CommonConceptGraph::PartOfId) != superRelations.end())
                 {
                     // part -- PART-OF --> whole
                     // Check if there is an edgeitem of type TO which points to destItem
@@ -290,7 +290,7 @@ void CommonConceptGraphScene::visualize()
                         addItem(line);
                     }
                 }
-                else if (superRelations.count(CommonConceptGraph::IsAId))
+                else if (std::find(superRelations.begin(), superRelations.end(), CommonConceptGraph::IsAId) != superRelations.end())
                 {
                     // subclass -- IS-A --> superclass
                     // Check if there is an edgeitem of type TO which points to destItem
@@ -310,7 +310,7 @@ void CommonConceptGraphScene::visualize()
                         addItem(line);
                     }
                 }
-                else if (superRelations.count(CommonConceptGraph::InstanceOfId))
+                else if (std::find(superRelations.begin(), superRelations.end(), CommonConceptGraph::InstanceOfId) != superRelations.end())
                 {
                     // individual -- INSTANCE-OF --> superclass
                     // Check if there is an edgeitem of type TO which points to destItem
@@ -330,7 +330,7 @@ void CommonConceptGraphScene::visualize()
                         addItem(line);
                     }
                 }
-                else if (superRelations.count(CommonConceptGraph::ConnectsId))
+                else if (std::find(superRelations.begin(), superRelations.end(), CommonConceptGraph::ConnectsId) != superRelations.end())
                 {
                     // interface -- CONNECTS --> interface
                     // Check if there is an edgeitem of type TO which points to destItem
