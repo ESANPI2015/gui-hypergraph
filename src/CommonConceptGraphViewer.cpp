@@ -146,9 +146,7 @@ QStringList CommonConceptGraphScene::getAllRelationUIDs()
 void CommonConceptGraphScene::visualize(const CommonConceptGraph& graph)
 {
     // Merge & visualize
-    Hypergraph merged(currentCommonConceptGraph, graph);
-    currentGraph = merged;
-    currentCommonConceptGraph = CommonConceptGraph(merged);
+    currentCommonConceptGraph.importFrom(graph);
     visualize();
 }
 
@@ -160,6 +158,7 @@ void CommonConceptGraphScene::visualize()
 
     // Make a snapshot of the current graph
     CommonConceptGraph snapshot(this->graph());
+    currentGraph = snapshot;
 
     // A: Try to draw instances/classes
     Hyperedges allConcepts(snapshot.find());
