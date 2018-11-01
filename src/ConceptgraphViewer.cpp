@@ -100,9 +100,7 @@ void ConceptgraphScene::updateEdge(const UniqueId id, const QString& label)
 void ConceptgraphScene::visualize(const Conceptgraph& graph)
 {
     // Merge & visualize
-    Hypergraph merged(currentConceptGraph, graph);
-    currentGraph = merged;
-    currentConceptGraph = Conceptgraph(merged);
+    currentConceptGraph.importFrom(graph);
     visualize();
 }
 
@@ -112,9 +110,13 @@ void ConceptgraphScene::visualize()
     if (!isEnabled())
         return;
 
+    // Make a snapshot of the current graph
+    Conceptgraph snapshot(this->graph());
+    currentGraph = snapshot;
+
     // Now get all edges of the graph
-    auto allConcepts = this->graph().find();
-    auto allRelations = this->graph().relations();
+    auto allConcepts(snapshot.find());
+    auto allRelations(snapshot.relations());
 
     // Then we go through all edges and check if we already have an ConceptgraphItem or not
     QMap<UniqueId,ConceptgraphItem*> validItems;
@@ -129,7 +131,7 @@ void ConceptgraphScene::visualize()
         ConceptgraphItem *item;
         if (!currentItems.contains(relId))
         {
-            item = new ConceptgraphItem(this->graph().get(relId), ConceptgraphItem::RELATION);
+            item = new ConceptgraphItem(snapshot.get(relId), ConceptgraphItem::RELATION);
             addItem(item);
             currentItems[relId] = item;
         } else {
@@ -143,7 +145,7 @@ void ConceptgraphScene::visualize()
         ConceptgraphItem *item;
         if (!currentItems.contains(conceptId))
         {
-            item = new ConceptgraphItem(this->graph().get(conceptId), ConceptgraphItem::CONCEPT);
+            item = new ConceptgraphItem(snapshot.get(conceptId), ConceptgraphItem::CONCEPT);
             addItem(item);
             currentItems[conceptId] = item;
         } else {
@@ -158,7 +160,7 @@ void ConceptgraphScene::visualize()
     {
         auto edgeId = it.key();
         auto srcItem = it.value();
-        auto edge = this->graph().get(edgeId);
+        auto edge = snapshot.get(edgeId);
         // Make sure that item and edge share the same label
         srcItem->setLabel(QString::fromStdString(edge->label()));
         for (auto otherId : edge->pointingTo())

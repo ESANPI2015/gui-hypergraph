@@ -122,11 +122,10 @@ void CommonConceptGraphScene::showInstances(const bool value)
 QStringList CommonConceptGraphScene::getAllClassUIDs()
 {
     QStringList result;
-    Hyperedges allClasses;
-    Hyperedges allConcepts = graph().find();
-    Hyperedges allInstances = graph().instancesOf(allConcepts);
-    allClasses = subtract(allConcepts, allInstances);
-    for (UniqueId classUID : allClasses)
+    Hyperedges allConcepts(graph().find());
+    Hyperedges allInstances(graph().instancesOf(allConcepts)); // offending line
+    Hyperedges allClasses(subtract(allConcepts, allInstances));
+    for (const UniqueId& classUID : allClasses)
         result.push_back(QString::fromStdString(classUID));
     return result;
 }
@@ -135,8 +134,8 @@ QStringList CommonConceptGraphScene::getAllRelationUIDs()
 {
     QStringList result;
     Hyperedges allRelClasses;
-    Hyperedges allRelations = graph().relations();
-    Hyperedges allFacts = graph().factsOf(allRelations);
+    Hyperedges allRelations(graph().relations());
+    Hyperedges allFacts(graph().factsOf(allRelations));
     allRelClasses = subtract(allRelations, allFacts);
     for (UniqueId classUID : allRelClasses)
         result.push_back(QString::fromStdString(classUID));
