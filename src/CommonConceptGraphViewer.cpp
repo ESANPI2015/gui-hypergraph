@@ -388,7 +388,7 @@ void CommonConceptGraphScene::visualize()
         // Destruct the item
         currentItems.remove(id);
         toBeDeleted.push_back(item);
-        //removeItem(item); // FIXME: Causes SEGFAULT when having child items?
+        removeItem(item);
     }
 
     // Finally: Delete items
@@ -641,21 +641,21 @@ void CommonConceptGraphWidget::onGraphChanged(QGraphicsItem* item)
 
 void CommonConceptGraphWidget::onGraphChanged(const UniqueId id)
 {
-    auto allConcepts = mpCommonConceptScene->graph().find();
-    auto allInstances = mpCommonConceptScene->graph().instancesOf(allConcepts);
-    auto allClasses   = subtract(allConcepts, allInstances);
-    auto allRelations = mpCommonConceptScene->graph().relations();
-    auto allFacts = mpCommonConceptScene->graph().factsOf(allRelations);
-    auto allRelClasses = subtract(allRelations, allFacts);
+    Hyperedges allConcepts(mpCommonConceptScene->graph().find());
+    Hyperedges allInstances(mpCommonConceptScene->graph().instancesOf(allConcepts));
+    Hyperedges allClasses(subtract(allConcepts, allInstances));
+    Hyperedges allRelations(mpCommonConceptScene->graph().relations());
+    Hyperedges allFacts(mpCommonConceptScene->graph().factsOf(allRelations));
+    Hyperedges allRelClasses(subtract(allRelations, allFacts));
     // Fill the lists
     mpNewUi->classListWidget->clear();
-    for (auto classId : allClasses) mpNewUi->classListWidget->addItem(QString::fromStdString(classId));
+    for (const UniqueId& classId : allClasses) mpNewUi->classListWidget->addItem(QString::fromStdString(classId));
     mpNewUi->instanceListWidget->clear();
-    for (auto instanceId : allInstances) mpNewUi->instanceListWidget->addItem(QString::fromStdString(instanceId));
+    for (const UniqueId& instanceId : allInstances) mpNewUi->instanceListWidget->addItem(QString::fromStdString(instanceId));
     mpNewUi->relationListWidget->clear();
-    for (auto relationId : allRelClasses) mpNewUi->relationListWidget->addItem(QString::fromStdString(relationId));
+    for (const UniqueId& relationId : allRelClasses) mpNewUi->relationListWidget->addItem(QString::fromStdString(relationId));
     mpNewUi->factListWidget->clear();
-    for (auto factId : allFacts) mpNewUi->factListWidget->addItem(QString::fromStdString(factId));
+    for (const UniqueId& factId : allFacts) mpNewUi->factListWidget->addItem(QString::fromStdString(factId));
     // Gets triggered whenever a concept||relations has been added||removed
     mpNewUi->statsLabel->setText(
                             "CLASSES: " + QString::number(allClasses.size()) +
