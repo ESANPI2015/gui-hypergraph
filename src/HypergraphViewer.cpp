@@ -282,13 +282,21 @@ void ForceBasedScene::updateLayout()
     // This is similar to Graph Drawing by Force-directed  Placement THOMAS M. J. FRUCHTERMAN* AND EDWARD M. REINGOLD 
     qreal mEquilibriumDistance_sqr = mEquilibriumDistance * mEquilibriumDistance;
     QMap<HyperedgeItem*, QPointF> displacements;
-    QList<QGraphicsItem*> allItems = items();
-    QList<QGraphicsItem*> excludedItems = selectedItems();
+    QList<QGraphicsItem*> allItems(items());
+    QList<QGraphicsItem*> excludedItems(selectedItems());
 
     // Remove all selected items from allItems
     for (auto item : excludedItems)
     {
         allItems.removeAll(item);
+    }
+
+    // Remove invisible items from allItems
+    excludedItems = allItems;
+    for (auto item : excludedItems)
+    {
+        if (!item->isVisible())
+            allItems.removeAll(item);
     }
 
     // Zeroing displacements & filter hyperedgeitems
