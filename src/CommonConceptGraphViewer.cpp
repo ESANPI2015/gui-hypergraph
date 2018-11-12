@@ -133,11 +133,10 @@ QStringList CommonConceptGraphScene::getAllClassUIDs()
 QStringList CommonConceptGraphScene::getAllRelationUIDs()
 {
     QStringList result;
-    Hyperedges allRelClasses;
     Hyperedges allRelations(graph().relations());
     Hyperedges allFacts(graph().factsOf(allRelations));
-    allRelClasses = subtract(allRelations, allFacts);
-    for (UniqueId classUID : allRelClasses)
+    Hyperedges allRelClasses(subtract(subtract(allRelations, allFacts), graph().read(CommonConceptGraph::FactOfId).pointingFrom()));
+    for (const UniqueId& classUID : allRelClasses)
         result.push_back(QString::fromStdString(classUID));
     return result;
 }
@@ -646,7 +645,7 @@ void CommonConceptGraphWidget::onGraphChanged(const UniqueId id)
     Hyperedges allClasses(subtract(allConcepts, allInstances));
     Hyperedges allRelations(mpCommonConceptScene->graph().relations());
     Hyperedges allFacts(mpCommonConceptScene->graph().factsOf(allRelations));
-    Hyperedges allRelClasses(subtract(allRelations, allFacts));
+    Hyperedges allRelClasses(subtract(subtract(allRelations, allFacts), mpCommonConceptScene->graph().read(CommonConceptGraph::FactOfId).pointingFrom()));
     // Fill the lists
     mpNewUi->classListWidget->clear();
     for (const UniqueId& classId : allClasses) mpNewUi->classListWidget->addItem(QString::fromStdString(classId));
