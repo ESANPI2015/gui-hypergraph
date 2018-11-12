@@ -41,7 +41,8 @@ class CommonConceptGraphScene : public ConceptgraphScene
         void relationRemoved(const UniqueId id);
 
     public slots:
-        void visualize();
+        void updateVisualization();
+        void visualize(const UniqueId& updatedId="");
         void visualize(const CommonConceptGraph& graph);
         void addInstance(const UniqueId superId, const QString& label);
         void addClass(const UniqueId id, const QString& label);
@@ -53,6 +54,7 @@ class CommonConceptGraphScene : public ConceptgraphScene
         void showInstances(const bool value);
 
     protected:
+        QTimer* mpUpdateTimer;
         bool mShowClasses;
         bool mShowInstances;
         CommonConceptGraph currentCommonConceptGraph;
