@@ -5,8 +5,8 @@
 #include <QStyleOptionGraphicsItem>
 #include <QtCore>
 
-ConceptgraphItem::ConceptgraphItem(Hyperedge *edge, ConceptgraphItemType type)
-: HyperedgeItem(edge)
+ConceptgraphItem::ConceptgraphItem(const UniqueId& uid, ConceptgraphItemType type)
+: HyperedgeItem(uid)
 {
     mType = type;
 }

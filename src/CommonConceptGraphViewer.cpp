@@ -110,7 +110,7 @@ void CommonConceptGraphScene::removeEdge(const UniqueId id)
 
 void CommonConceptGraphScene::updateEdge(const UniqueId id, const QString& label)
 {
-    graph().get(id)->updateLabel(label.toStdString());
+    graph().get(id).updateLabel(label.toStdString());
     visualize(id);
 }
 
@@ -225,9 +225,9 @@ void CommonConceptGraphScene::visualize(const UniqueId& updatedId)
         // Check if the concept is a class or an instance
         if (instance)
         {
-            item = new CommonConceptGraphItem(this->graph().get(conceptId), CommonConceptGraphItem::INSTANCE, this->graph().read(conceptId).label());
+            item = new CommonConceptGraphItem(conceptId, CommonConceptGraphItem::INSTANCE, this->graph().read(conceptId).label());
         } else {
-            item = new CommonConceptGraphItem(this->graph().get(conceptId), CommonConceptGraphItem::CLASS, this->graph().read(conceptId).label());
+            item = new CommonConceptGraphItem(conceptId, CommonConceptGraphItem::CLASS, this->graph().read(conceptId).label());
         }
         addItem(item);
         currentItems[conceptId] = item;
@@ -250,9 +250,9 @@ void CommonConceptGraphScene::visualize(const UniqueId& updatedId)
     std::string superclassLabel;
     for (const UniqueId& superclassId : superclassesOf)
     {
-        superclassLabel += (" " + this->graph().get(superclassId)->label());
+        superclassLabel += (" " + this->graph().read(superclassId).label());
     }
-    item->setLabel(QString::fromStdString(this->graph().get(conceptId)->label()), QString::fromStdString(superclassLabel));
+    item->setLabel(QString::fromStdString(this->graph().read(conceptId).label()), QString::fromStdString(superclassLabel));
 
     // Update relations
     Hyperedges relationsFrom(this->graph().relationsFrom(Hyperedges{conceptId}));

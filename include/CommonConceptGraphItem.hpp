@@ -13,7 +13,7 @@ class CommonConceptGraphItem : public HyperedgeItem
             INSTANCE
         } CommonConceptGraphItemType;
 
-        CommonConceptGraphItem(Hyperedge *x,
+        CommonConceptGraphItem(const UniqueId& uid,
                                CommonConceptGraphItemType type,
                                std::string superClassLabel
                               );

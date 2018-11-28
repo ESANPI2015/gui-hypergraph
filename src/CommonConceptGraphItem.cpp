@@ -6,11 +6,11 @@
 #include <QtCore>
 #include "Hyperedge.hpp"
 
-CommonConceptGraphItem::CommonConceptGraphItem(Hyperedge *edge, CommonConceptGraphItemType type, std::string superClassLabel)
-: HyperedgeItem(edge)
+CommonConceptGraphItem::CommonConceptGraphItem(const UniqueId& uid, CommonConceptGraphItemType type, std::string superClassLabel)
+: HyperedgeItem(uid)
 {
     mType = type;
-    setLabel(QString::fromStdString(edge->label()), QString::fromStdString(superClassLabel));
+    setLabel(QString::fromStdString(uid), QString::fromStdString(superClassLabel));
 }
 
 CommonConceptGraphItem::~CommonConceptGraphItem()

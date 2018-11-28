@@ -13,7 +13,7 @@ class ConceptgraphItem : public HyperedgeItem
             RELATION
         } ConceptgraphItemType;
 
-        ConceptgraphItem(Hyperedge *x, ConceptgraphItemType type);
+        ConceptgraphItem(const UniqueId& uid, ConceptgraphItemType type);
         virtual ~ConceptgraphItem();
 
         void paint(QPainter *painter, const QStyleOptionGraphicsItem *option,

@@ -92,15 +92,14 @@ void HypergraphScene::connectEdges(const UniqueId fromId, const UniqueId id, con
 
 void HypergraphScene::updateEdge(const UniqueId id, const QString& label)
 {
-    currentGraph.get(id)->updateLabel(label.toStdString());
+    currentGraph.get(id).updateLabel(label.toStdString());
     visualize();
 }
 
 void HypergraphScene::visualize(const Hypergraph& graph)
 {
     // Merge
-    Hypergraph merged(currentGraph, graph);
-    currentGraph = merged;
+    currentGraph.importFrom(graph);
 
     // ... and visualize
     visualize();
@@ -119,20 +118,19 @@ void HypergraphScene::visualize()
     QMap<UniqueId,HyperedgeItem*> validItems;
     for (auto edgeId : allEdges)
     {
-        auto x = currentGraph.get(edgeId);
-        if (!x)
+        if (!currentGraph.exists(edgeId))
             continue;
         // Create or get item
         HyperedgeItem *item;
-        if (!currentItems.contains(x->id()))
+        if (!currentItems.contains(edgeId))
         {
-            item = new HyperedgeItem(x);
+            item = new HyperedgeItem(edgeId);
             addItem(item);
-            currentItems[x->id()] = item;
+            currentItems[edgeId] = item;
         } else {
-            item = currentItems[x->id()];
+            item = currentItems[edgeId];
         }
-        validItems[x->id()] = item;
+        validItems[edgeId] = item;
     }
     
     // Everything which is in validItem should be wired
@@ -141,10 +139,10 @@ void HypergraphScene::visualize()
     {
         auto edgeId = it.key();
         auto srcItem = it.value();
-        auto edge = currentGraph.get(edgeId);
+        auto edge = currentGraph.read(edgeId);
         // Make sure that item and edge share the same label
-        srcItem->setLabel(QString::fromStdString(edge->label()));
-        for (auto otherId : edge->pointingTo())
+        srcItem->setLabel(QString::fromStdString(edge.label()));
+        for (auto otherId : edge.pointingTo())
         {
             if (!validItems.contains(otherId))
                 continue;
@@ -172,7 +170,7 @@ void HypergraphScene::visualize()
                 addItem(line);
             }
         }
-        for (auto otherId : edge->pointingFrom())
+        for (auto otherId : edge.pointingFrom())
         {
             if (!validItems.contains(otherId))
                 continue;

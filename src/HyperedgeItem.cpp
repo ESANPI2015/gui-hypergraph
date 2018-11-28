@@ -5,18 +5,17 @@
 #include <QColor>
 #include <QStyleOptionGraphicsItem>
 #include <QtCore>
-#include "Hyperedge.hpp"
 #include <iostream>
 
-HyperedgeItem::HyperedgeItem(Hyperedge *edge)
-: edgeId(edge->id())
+HyperedgeItem::HyperedgeItem(const UniqueId& uid)
+: edgeId(uid)
 {
     setFlag(ItemIsMovable);
     setFlag(ItemIsSelectable);
     setFlag(ItemSendsScenePositionChanges);
     setVisible(true);
     setZValue(qrand());
-    setPlainText(QString::fromStdString(edge->label()));
+    setPlainText(QString::fromStdString(uid));
     lastPosUsed = QPointF(0.f,60.f);
 }
 

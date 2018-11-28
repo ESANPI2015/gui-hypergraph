@@ -93,7 +93,7 @@ void ConceptgraphScene::removeEdge(const UniqueId id)
 
 void ConceptgraphScene::updateEdge(const UniqueId id, const QString& label)
 {
-    currentConceptGraph.get(id)->updateLabel(label.toStdString());
+    currentConceptGraph.get(id).updateLabel(label.toStdString());
     visualize();
 }
 
@@ -131,7 +131,7 @@ void ConceptgraphScene::visualize()
         ConceptgraphItem *item;
         if (!currentItems.contains(relId))
         {
-            item = new ConceptgraphItem(snapshot.get(relId), ConceptgraphItem::RELATION);
+            item = new ConceptgraphItem(relId, ConceptgraphItem::RELATION);
             addItem(item);
             currentItems[relId] = item;
         } else {
@@ -145,7 +145,7 @@ void ConceptgraphScene::visualize()
         ConceptgraphItem *item;
         if (!currentItems.contains(conceptId))
         {
-            item = new ConceptgraphItem(snapshot.get(conceptId), ConceptgraphItem::CONCEPT);
+            item = new ConceptgraphItem(conceptId, ConceptgraphItem::CONCEPT);
             addItem(item);
             currentItems[conceptId] = item;
         } else {
@@ -162,8 +162,8 @@ void ConceptgraphScene::visualize()
         auto srcItem = it.value();
         auto edge = snapshot.get(edgeId);
         // Make sure that item and edge share the same label
-        srcItem->setLabel(QString::fromStdString(edge->label()));
-        for (auto otherId : edge->pointingTo())
+        srcItem->setLabel(QString::fromStdString(edge.label()));
+        for (auto otherId : edge.pointingTo())
         {
             if (!validItems.contains(otherId))
                 continue;
@@ -189,7 +189,7 @@ void ConceptgraphScene::visualize()
                 addItem(line);
             }
         }
-        for (auto otherId : edge->pointingFrom())
+        for (auto otherId : edge.pointingFrom())
         {
             if (!validItems.contains(otherId))
                 continue;
