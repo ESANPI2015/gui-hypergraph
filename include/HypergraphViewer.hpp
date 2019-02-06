@@ -32,7 +32,7 @@ class HypergraphScene : public QGraphicsScene
         void removeItem(QGraphicsItem *item);
         Hyperedges getAllEdges()
         {
-            return currentGraph.find();
+            return currentGraph.findByLabel();
         }
         Hypergraph& graph()
         {

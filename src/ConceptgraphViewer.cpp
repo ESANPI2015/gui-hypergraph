@@ -93,7 +93,7 @@ void ConceptgraphScene::removeEdge(const UniqueId id)
 
 void ConceptgraphScene::updateEdge(const UniqueId id, const QString& label)
 {
-    currentConceptGraph.get(id).updateLabel(label.toStdString());
+    currentConceptGraph.access(id).updateLabel(label.toStdString());
     visualize();
 }
 
@@ -115,7 +115,7 @@ void ConceptgraphScene::visualize()
     currentGraph = snapshot;
 
     // Now get all edges of the graph
-    auto allConcepts(snapshot.find());
+    auto allConcepts(snapshot.concepts());
     auto allRelations(snapshot.relations());
 
     // Then we go through all edges and check if we already have an ConceptgraphItem or not
@@ -160,7 +160,7 @@ void ConceptgraphScene::visualize()
     {
         auto edgeId = it.key();
         auto srcItem = it.value();
-        auto edge = snapshot.get(edgeId);
+        auto edge = snapshot.access(edgeId);
         // Make sure that item and edge share the same label
         srcItem->setLabel(QString::fromStdString(edge.label()));
         for (auto otherId : edge.pointingTo())
@@ -439,7 +439,7 @@ void ConceptgraphWidget::onGraphChanged(const UniqueId id)
 {
     // Gets triggered whenever a concept||relations has been added||removed
     mpUi->statsLabel->setText(
-                            "CONCEPTS: " + QString::number(mpConceptScene->graph().find().size()) +
+                            "CONCEPTS: " + QString::number(mpConceptScene->graph().concepts().size()) +
                             "  RELATIONS: " + QString::number(mpConceptScene->graph().relations().size())
                              );
 }

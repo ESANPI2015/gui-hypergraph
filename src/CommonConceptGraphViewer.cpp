@@ -76,7 +76,7 @@ void CommonConceptGraphScene::removeItem(QGraphicsItem *item)
 
 void CommonConceptGraphScene::addInstance(const UniqueId superId, const QString& label)
 {
-    Hyperedges instances(graph().instantiateDeepFrom(Hyperedges{superId}, label.toStdString()));
+    Hyperedges instances(graph().instantiateFrom(Hyperedges{superId}, label.toStdString()));
     for (const UniqueId& id : instances)
         visualize(id);
 }
@@ -110,7 +110,7 @@ void CommonConceptGraphScene::removeEdge(const UniqueId id)
 
 void CommonConceptGraphScene::updateEdge(const UniqueId id, const QString& label)
 {
-    graph().get(id).updateLabel(label.toStdString());
+    graph().access(id).updateLabel(label.toStdString());
     visualize(id);
 }
 
@@ -127,7 +127,7 @@ void CommonConceptGraphScene::showInstances(const bool value)
 QStringList CommonConceptGraphScene::getAllClassUIDs()
 {
     QStringList result;
-    Hyperedges allConcepts(graph().find());
+    Hyperedges allConcepts(graph().concepts());
     Hyperedges allInstances(graph().instancesOf(allConcepts));
     Hyperedges allClasses(subtract(allConcepts, allInstances));
     for (const UniqueId& classUID : allClasses)
@@ -140,7 +140,7 @@ QStringList CommonConceptGraphScene::getAllRelationUIDs()
     QStringList result;
     Hyperedges allRelations(graph().relations());
     Hyperedges allFacts(graph().factsOf(allRelations));
-    Hyperedges allRelClasses(subtract(subtract(allRelations, allFacts), graph().read(CommonConceptGraph::FactOfId).pointingFrom()));
+    Hyperedges allRelClasses(subtract(subtract(allRelations, allFacts), graph().access(CommonConceptGraph::FactOfId).pointingFrom()));
     for (const UniqueId& classUID : allRelClasses)
         result.push_back(QString::fromStdString(classUID));
     return result;
@@ -165,7 +165,7 @@ void CommonConceptGraphScene::visualize(const UniqueId& updatedId)
     if (!isEnabled())
         return;
 
-    Hyperedges allConcepts(this->graph().find());
+    Hyperedges allConcepts(this->graph().concepts());
     if (!allConcepts.size())
         return;
 
@@ -225,9 +225,9 @@ void CommonConceptGraphScene::visualize(const UniqueId& updatedId)
         // Check if the concept is a class or an instance
         if (instance)
         {
-            item = new CommonConceptGraphItem(conceptId, CommonConceptGraphItem::INSTANCE, this->graph().read(conceptId).label());
+            item = new CommonConceptGraphItem(conceptId, CommonConceptGraphItem::INSTANCE, this->graph().access(conceptId).label());
         } else {
-            item = new CommonConceptGraphItem(conceptId, CommonConceptGraphItem::CLASS, this->graph().read(conceptId).label());
+            item = new CommonConceptGraphItem(conceptId, CommonConceptGraphItem::CLASS, this->graph().access(conceptId).label());
         }
         addItem(item);
         currentItems[conceptId] = item;
@@ -250,15 +250,15 @@ void CommonConceptGraphScene::visualize(const UniqueId& updatedId)
     std::string superclassLabel;
     for (const UniqueId& superclassId : superclassesOf)
     {
-        superclassLabel += (" " + this->graph().read(superclassId).label());
+        superclassLabel += (" " + this->graph().access(superclassId).label());
     }
-    item->setLabel(QString::fromStdString(this->graph().read(conceptId).label()), QString::fromStdString(superclassLabel));
+    item->setLabel(QString::fromStdString(this->graph().access(conceptId).label()), QString::fromStdString(superclassLabel));
 
     // Update relations
     Hyperedges relationsFrom(this->graph().relationsFrom(Hyperedges{conceptId}));
     CommonConceptGraphItem* srcItem(item);
     auto myEdgeItems = srcItem->getEdgeItems();
-    Hyperedges otherIds(this->graph().to(relationsFrom));
+    Hyperedges otherIds(this->graph().isPointingTo(relationsFrom));
     for (const UniqueId& otherId : otherIds)
     {
         // Skip invalid items
@@ -286,7 +286,7 @@ void CommonConceptGraphScene::visualize(const UniqueId& updatedId)
         for (const UniqueId& relId : commonRelations)
         {
             // Get super relation(s) of a fact
-            Hyperedges superRelations(this->graph().factsOf(relId, "", CommonConceptGraph::TraversalDirection::FORWARD));
+            Hyperedges superRelations(this->graph().factsOf(relId, Hyperedges(), Hyperedges(), CommonConceptGraph::TraversalDirection::FORWARD));
             if (!superRelations.size())
             {
                 continue;
@@ -609,12 +609,12 @@ void CommonConceptGraphWidget::onGraphChanged(QGraphicsItem* item)
 void CommonConceptGraphWidget::onGraphChanged(const UniqueId id)
 {
     // TODO: Use UID to update only PARTS of the GUI!
-    Hyperedges allConcepts(mpCommonConceptScene->graph().find());
+    Hyperedges allConcepts(mpCommonConceptScene->graph().concepts());
     Hyperedges allInstances(mpCommonConceptScene->graph().instancesOf(allConcepts));
     Hyperedges allClasses(subtract(allConcepts, allInstances));
     Hyperedges allRelations(mpCommonConceptScene->graph().relations());
     Hyperedges allFacts(mpCommonConceptScene->graph().factsOf(allRelations));
-    Hyperedges allRelClasses(subtract(subtract(allRelations, allFacts), mpCommonConceptScene->graph().read(CommonConceptGraph::FactOfId).pointingFrom()));
+    Hyperedges allRelClasses(subtract(subtract(allRelations, allFacts), mpCommonConceptScene->graph().access(CommonConceptGraph::FactOfId).pointingFrom()));
     // Fill the lists
     mpNewUi->classListWidget->clear();
     for (const UniqueId& classId : allClasses) mpNewUi->classListWidget->addItem(QString::fromStdString(classId));

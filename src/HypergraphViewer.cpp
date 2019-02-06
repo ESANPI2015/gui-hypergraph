@@ -84,15 +84,15 @@ void HypergraphScene::removeEdge(const UniqueId id)
 void HypergraphScene::connectEdges(const UniqueId fromId, const UniqueId id, const UniqueId toId)
 {
     if (!fromId.empty())
-        currentGraph.from(Hyperedges{fromId}, Hyperedges{id});
+        currentGraph.pointsFrom(Hyperedges{id}, Hyperedges{fromId});
     if (!toId.empty())
-        currentGraph.to(Hyperedges{id}, Hyperedges{toId});
+        currentGraph.pointsTo(Hyperedges{id}, Hyperedges{toId});
     visualize();
 }
 
 void HypergraphScene::updateEdge(const UniqueId id, const QString& label)
 {
-    currentGraph.get(id).updateLabel(label.toStdString());
+    currentGraph.access(id).updateLabel(label.toStdString());
     visualize();
 }
 
@@ -112,7 +112,7 @@ void HypergraphScene::visualize()
         return;
 
     // Now get all edges of the graph
-    auto allEdges = currentGraph.find();
+    auto allEdges = currentGraph.findByLabel();
 
     // Then we go through all edges and check if we already have an HyperedgeItem or not
     QMap<UniqueId,HyperedgeItem*> validItems;
@@ -139,7 +139,7 @@ void HypergraphScene::visualize()
     {
         auto edgeId = it.key();
         auto srcItem = it.value();
-        auto edge = currentGraph.read(edgeId);
+        auto edge = currentGraph.access(edgeId);
         // Make sure that item and edge share the same label
         srcItem->setLabel(QString::fromStdString(edge.label()));
         for (auto otherId : edge.pointingTo())
@@ -673,7 +673,7 @@ void HypergraphViewer::storeToYAML()
 void HypergraphViewer::onGraphChanged(const UniqueId id)
 {
     // update stats
-    mpUi->statsLabel->setText("HE: " + QString::number(mpScene->graph().find().size()));
+    mpUi->statsLabel->setText("HE: " + QString::number(mpScene->graph().findByLabel().size()));
 }
 
 void HypergraphViewer::onGraphChanged(QGraphicsItem* item)
@@ -689,11 +689,11 @@ void HypergraphViewer::onGraphChanged(QGraphicsItem* item)
 
 void HypergraphViewer::clearHypergraph()
 {
-    auto edges = mpScene->graph().find();
+    auto edges = mpScene->graph().findByLabel();
     for (auto edgeId : edges)
         mpScene->graph().destroy(edgeId);
     // update stats
-    mpUi->statsLabel->setText("HE: " + QString::number(mpScene->graph().find().size()));
+    mpUi->statsLabel->setText("HE: " + QString::number(mpScene->graph().findByLabel().size()));
 }
 
 void HypergraphViewer::setEquilibriumDistance(qreal distance)
