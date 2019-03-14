@@ -19,7 +19,7 @@
 CommonConceptGraphScene::CommonConceptGraphScene(QObject * parent)
 : ConceptgraphScene(parent)
 {
-    mShowClasses = false;
+    mShowClasses = true;
     mShowInstances = true;
     mpUpdateTimer = new QTimer(this);
     connect(mpUpdateTimer, SIGNAL(timeout()), this, SLOT(updateVisualization()));
@@ -83,7 +83,7 @@ void CommonConceptGraphScene::addInstance(const UniqueId superId, const QString&
 
 void CommonConceptGraphScene::addClass(const UniqueId id, const QString& label)
 {
-    graph().create(id, label.toStdString());
+    graph().concept(id, label.toStdString());
     visualize(id);
 }
 
