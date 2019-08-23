@@ -70,9 +70,9 @@ void ConceptgraphScene::removeItem(QGraphicsItem *item)
 void ConceptgraphScene::addConcept(const UniqueId id, const QString& label)
 {
     if (id.empty())
-        currentConceptGraph.create(label.toStdString());
+        currentConceptGraph.concept(label.toStdString(), label.toStdString());
     else
-        currentConceptGraph.create(id, label.toStdString());
+        currentConceptGraph.concept(id, label.toStdString());
     visualize();
 }
 

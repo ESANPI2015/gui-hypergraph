@@ -1,0 +1,16 @@
+cmake_minimum_required(VERSION 2.8.2)
+
+project(componentnet NONE)
+
+include(ExternalProject)
+ExternalProject_Add(componentnet
+  GIT_REPOSITORY    https://github.com/ESANPI2015/componentnet
+  GIT_TAG           master
+  SOURCE_DIR        "${CMAKE_CURRENT_BINARY_DIR}/componentnet-src"
+  BINARY_DIR        "${CMAKE_CURRENT_BINARY_DIR}/componentnet-build"
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND     ""
+  INSTALL_COMMAND   ""
+  TEST_COMMAND      ""
+)
+
