@@ -93,7 +93,7 @@ void ConceptgraphScene::removeEdge(const UniqueId id)
 
 void ConceptgraphScene::updateEdge(const UniqueId id, const QString& label)
 {
-    currentConceptGraph.access(id).updateLabel(label.toStdString());
+    currentConceptGraph.access(id).label(label.toStdString());
     visualize();
 }
 

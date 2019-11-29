@@ -110,7 +110,7 @@ void CommonConceptGraphScene::removeEdge(const UniqueId id)
 
 void CommonConceptGraphScene::updateEdge(const UniqueId id, const QString& label)
 {
-    graph().access(id).updateLabel(label.toStdString());
+    graph().access(id).label(label.toStdString());
     visualize(id);
 }
 

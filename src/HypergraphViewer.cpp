@@ -92,7 +92,7 @@ void HypergraphScene::connectEdges(const UniqueId fromId, const UniqueId id, con
 
 void HypergraphScene::updateEdge(const UniqueId id, const QString& label)
 {
-    currentGraph.access(id).updateLabel(label.toStdString());
+    currentGraph.access(id).label(label.toStdString());
     visualize();
 }
 
